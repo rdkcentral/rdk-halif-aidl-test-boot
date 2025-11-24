@@ -5,7 +5,8 @@
 - [Acronyms, Terms and Abbreviations](#acronyms-terms-and-abbreviations)
 - [Introduction](#introduction)
 - [Module Description](#module-description)
-- [Test Specification](#test-specification)
+- [L2 Test Specification](#l2-test-specification)
+- [L3 Test Specification](#l3-test-specification)
 
 ## Acronyms, Terms and Abbreviations
 
@@ -41,5 +42,4 @@ The Boot interface provides essential functionalities for managing the boot proc
 
 |Test|Description|HAL APIs|
 |----|-----------|--------|
-|Test Reboot | Verify that the reboot API performs a shutdown and warm reboot of the device with the specified reset types. | void reboot(in ResetType[] resetTypes)|
-|Test Shutdown | Verify that the shutdown API performs a shutdown of the device without reboot. | void shutdown() |
+|Test Reboot | Verify that the reboot API performs a shutdown and warm reboot of the device with the specified reset types. | void reboot(in ResetType[] resetTypes), Capabilities getCapabilities(), BootReason getBootReason()|
