@@ -35,7 +35,6 @@ The Boot interface provides essential functionalities for managing the boot proc
 |----|-----------|--------|
 |Test Get Capabilities |Verify that the getCapabilities API returns the correct capabilities of the boot service.| Capabilities getCapabilities()|
 |Test Get Boot Reason| Verify that the getBootReason API returns the correct reason for the device boot.| BootReason getBootReason()|
-|Test Get Power Source | Verify that the getPowerSource API returns the correct power source of the device. | PowerSource getPowerSource() |
 
 
 ## L3 Test Specification
