@@ -33,8 +33,7 @@ The Boot interface provides essential functionalities for managing the boot proc
 
 |Test|Description|HAL APIs|
 |----|-----------|--------|
-|Test Get Capabilities |Verify that the getCapabilities API returns the correct capabilities of the boot service.| Capabilities getCapabilities()|
-|Test Get Boot Reason| Verify that the getBootReason API returns the correct reason for the device boot.| BootReason getBootReason()|
+|Test Set/Get Boot Reason| Verify that the setBootReason/getBootReason API sets/returns the correct reason for the device boot. Note: This is a placehoder and will be finalized after setBootReason() is made available| BootReason getBootReason(), setBootReason|
 
 
 ## L3 Test Specification
@@ -42,3 +41,4 @@ The Boot interface provides essential functionalities for managing the boot proc
 |Test|Description|HAL APIs|
 |----|-----------|--------|
 |Test Reboot | Verify that the reboot API performs a shutdown and warm reboot of the device with the specified reset types. | void reboot(in ResetType[] resetTypes), Capabilities getCapabilities(), BootReason getBootReason()|
+|Test getBootReason | Verify various reboot reasons specified like WATCHDOG, SOFTWARE_RESET, THERMAL_RESET, COLD_BOOT, STR_AUTH_FAILURE | BootReason getBootReason()|
