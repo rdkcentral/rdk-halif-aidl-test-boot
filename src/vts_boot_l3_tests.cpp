@@ -104,7 +104,7 @@ UT_ADD_TEST(VTS_L3_BOOT, reboot_system)
     UT_LOG_INFO("Enter reset types from below options:");
     for(const auto &resetType : android::internal::enum_values<com::rdk::hal::boot::ResetType>)
     {
-        UT_LOG_INFO(" %s : %d", com::rdk::hal::boot::toString(resetType).c_str(), resetType);
+        UT_LOG_INFO(" %s : %d\n", com::rdk::hal::boot::toString(resetType).c_str(), resetType);
     }
     scanf("%d", (int*)&uResetType); // taking input for reset type
     resetTypes.push_back(uResetType);

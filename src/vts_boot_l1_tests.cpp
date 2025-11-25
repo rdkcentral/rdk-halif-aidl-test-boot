@@ -99,14 +99,39 @@ UT_ADD_TEST(VTS_L1_BOOT, getCapabilities_pos)
     UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
     com::rdk::hal::boot::Capabilities capabilities;
     BOOT_GETCAPABILITIES_SUCCESS(bootHandle, capabilities);
-    UT_ASSERT_FALSE(capabilities.supportedResetTypes.empty());
+    const std::string baseKey = "IBoot/supportedResetTypes";
+    UT_ASSERT_EQUAL(capabilities.supportedResetTypes.size(), UT_KVP_PROFILE_GET_LIST_COUNT(baseKey.c_str()));
     for (const auto &resetTypes : capabilities.supportedResetTypes)
     {
-        UT_LOG_DEBUG("Supported Reset Type: %s", com::rdk::hal::boot::toString(resetTypes).c_str());
+        const std::string resetTypesStr = android::internal::ToString(resetTypes);
+        UT_LOG_DEBUG("Supported resetTypesStr: %s\n", resetTypesStr.c_str());
+        std::string key;
+        for(int i = 0;i < (int)capabilities.supportedResetTypes.size(); i++)
+        {
+            key = baseKey + "." + std::to_string(i) + "." + resetTypesStr;
+            if (ut_kvp_fieldPresent(ut_kvp_profile_getInstance(), key.c_str()))
+            {
+                UT_ASSERT_TRUE(true); // Key found
+                break;
+            }
+        }
     }
+    const std::string baseKeyBootReasons = "IBoot/supportedBootReasons";
+    UT_ASSERT_EQUAL(capabilities.supportedBootReasons.size(), UT_KVP_PROFILE_GET_LIST_COUNT(baseKeyBootReasons.c_str()));
     for (const auto &bootReason : capabilities.supportedBootReasons)
     {
-        UT_LOG_DEBUG("Supported Boot Reason: %s", com::rdk::hal::boot::toString(bootReason).c_str());
+        const std::string bootReasonStr = android::internal::ToString(bootReason);
+        UT_LOG_DEBUG("Supported bootReasonStr: %s\n", bootReasonStr.c_str());
+        std::string key;
+        for(int i = 0;i < (int)capabilities.supportedBootReasons.size(); i++)
+        {
+            key = baseKey + "." + std::to_string(i) + "." + bootReasonStr;
+            if (ut_kvp_fieldPresent(ut_kvp_profile_getInstance(), key.c_str()))
+            {
+                UT_ASSERT_TRUE(true); // Key found
+                break;
+            }
+        }
     }
 }
 
@@ -116,7 +141,10 @@ UT_ADD_TEST(VTS_L1_BOOT, getBootReason_pos)
     UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
     com::rdk::hal::boot::BootReason bootReason;
     BOOT_GETBOOTREASON_SUCCESS(bootHandle, bootReason);
-    UT_LOG_DEBUG("Boot Reason: %s", com::rdk::hal::boot::toString(bootReason).c_str());
+    const std::string baseKey = "IBoot/bootReason_L1/0";
+    char returnedString[UT_KVP_MAX_ELEMENT_SIZE] = {0}; // Buffer to hold expected value from profile
+    UT_KVP_PROFILE_GET_STRING(baseKey.c_str(), returnedString); // Get expected value from profile
+    UT_ASSERT_STRING_EQUAL(std::string(android::internal::ToString(bootReason)).c_str(), returnedString);
 }
 
 UT_ADD_TEST(VTS_L1_BOOT, reboot_neg)
