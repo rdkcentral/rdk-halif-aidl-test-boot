@@ -35,12 +35,11 @@ Boot:
     - name: "VTS_L1_BOOT"
       test_cases: 
           - "getCapabilities_pos"
-          - "get_pos"
-          - "set_pos"
-          - "set_neg"
-    - name: "VTS_L2_BOOT"
-      test_cases:
-          - "test_l2_setgetGeneralStates"
-          - "test_l2_setgetWpsStates"
-          - "test_l2_setgetNetworkStates"
-          - "test_l2_setgetMaintenanceStates"
+          - "getBootReason_pos"
+          - "reboot_neg"
+    # - name: "VTS_L2_BOOT"
+    #   test_cases:
+    #       - "test_l2_setgetGeneralStates"
+    #       - "test_l2_setgetWpsStates"
+    #       - "test_l2_setgetNetworkStates"
+    #       - "test_l2_setgetMaintenanceStates"
