@@ -30,7 +30,7 @@ deviceConfig:
         target_directory: "/tmp/"
         boot_process_name: "Vendor-Boot"
         prompt: "~#" # Prompt string on console
-        wait_time: 240 #Configurable timeout value to limit the total duration of individual tests
+        wait_time: 20 #Configurable timeout value to limit the total duration of individual tests
         test:
             profile: "../../profiles/hfp-boot-vcomponent.yaml" #HFP profile used to meet platform requirements
             #platform_led_config: "../../test_configuration/vts_indicator_LED_config_vdevice.yaml"

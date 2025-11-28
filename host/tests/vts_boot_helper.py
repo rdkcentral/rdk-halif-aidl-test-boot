@@ -106,63 +106,6 @@ class bootHelperClass(utHelperClass):
         self.utilities.change_directory(self.hal_session_1, self.targetWorkspace)
         self.hal_session_1.write(f"./{self.cpe.get('boot_process_name')} &")
         time.sleep(2)
-    
-    def bootReadYaml(self, yaml_path: str) -> dict:
-        """
-        Reads a YAML file and returns its content as a dictionary.
-        Args:
-            yaml_path (str): Path to the YAML file
-        Returns:
-            dict: Content of the YAML file as a dictionary
-        """
-        with open(yaml_path, "r") as f:
-            return yaml.safe_load(f)
-
-
-    def bootWriteYaml(self, yaml_path: str, data: dict):
-        """
-        Writes a dictionary to a YAML file.
-        Args:
-            yaml_path (str): Path to the YAML file
-            data (dict): Content to write to the YAML file
-        """
-        with open(yaml_path, "w") as f:
-            yaml.dump(data, f, sort_keys=False, default_flow_style=None)
-
-    def updateTestconfigurationFile(self, set_state:str, states_list:list, stress:bool):
-        """
-         Updates the Boot L3 test YAML configuration file.
-        """
-        
-        data = self.bootReadYaml(self.l3TestConfigFile)
-        config_statelist = data["Boot"]["L3"]["SetStates"]["Parameters"]["state"]
-        repeat_count = 1
-
-        if stress:
-            config_statelist.clear()
-            for states in states_list:
-                config_statelist.append(states)
-        else:
-            config_statelist.clear()
-            config_statelist.append(str(set_state))
-            data["Boot"]["L3"]["SetStates"]["Parameters"]["repeat"] = repeat_count
-
-        # write to YAML
-        self.bootWriteYaml(self.l3TestConfigFile, data)
-
-
-    def updateNestedDictionaries(self, original: dict, updates: dict):
-        """
-        Recursively updates nested dictionaries.
-        Args:
-            original (dict): Original dictionary to be updated
-            updates (dict): Dictionary with updates
-        """
-        for key, value in updates.items():
-            if isinstance(value, dict) and key in original:
-                self.updateNestedDictionaries(original[key], value)
-            else:
-                original[key] = value
 
     def testEndFunction(self, powerOff=True):
         """
@@ -171,3 +114,6 @@ class bootHelperClass(utHelperClass):
             powerOff (bool): Whether to power off the device
         """
         super().testEndFunction(powerOff)
+
+    def waitForBoot(self):
+        return super().waitForBoot()

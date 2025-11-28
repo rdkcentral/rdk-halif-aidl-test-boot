@@ -33,17 +33,10 @@ Boot:
                 name: "VTS_L1_BOOT"
                 tests: 
                     - "getCapabilities_pos"
-                    - "get_pos"
-                    - "set_pos"
-                    - "set_neg"
+                    - "getBootReason_pos"
+                    - "reboot_neg"
             1:
-                name: "VTS_L2_BOOT"
-                tests:
-                    - "test_l2_setgetGeneralStates"
-                    - "test_l2_setgetWpsStates"
-                    - "test_l2_setgetNetworkStates"
-                    - "test_l2_setgetMaintenanceStates"
-            2:
                 name: "VTS_L3_BOOT"
                 tests:
-                    - "SetStates"
+                    - "reboot_system"
+                    - "checkBootReason"
