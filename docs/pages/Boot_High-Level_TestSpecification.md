@@ -26,7 +26,7 @@ This document provides an overview of the testing requirements for the Boot modu
 
 ## Module Description
 
-The Boot interface provides essential functionalities for managing the boot process of a device. It includes methods to retrieve boot service capabilities, determine the reason for the device boot, perform reboots and shutdowns, and obtain information about the device's power source.
+The Boot interface provides essential functionalities for managing the boot process of a device. It includes methods to retrieve boot service capabilities, determine the reason for the device boot and perform reboots.
 
 
 ## L2 Test Specification
@@ -40,5 +40,5 @@ The Boot interface provides essential functionalities for managing the boot proc
 
 |Test|Description|HAL APIs|
 |----|-----------|--------|
-|Test Reboot | Verify that the reboot API performs a shutdown and warm reboot of the device with the specified reset types. | void reboot(in ResetType[] resetTypes), Capabilities getCapabilities(), BootReason getBootReason()|
+|Test Reboot | Verify that the reboot API performs a reboot of the device with the specified reset types. | void reboot(in ResetType[] resetTypes), Capabilities getCapabilities(), BootReason getBootReason()|
 |Test getBootReason | Verify various reboot reasons specified like WATCHDOG, SOFTWARE_RESET, THERMAL_RESET, COLD_BOOT, STR_AUTH_FAILURE | BootReason getBootReason()|
