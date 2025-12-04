@@ -36,8 +36,9 @@ from vts_boot_helper import bootHelperClass
 
 BOOT_L1_TEST_SUITE_NAME = "VTS_L1_BOOT"
 BOOT_L2_TEST_SUITE_NAME = "VTS_L2_BOOT"
+BOOT_REASON_FILE_ON_DEVICE = "/var/boot_reason"
 
-class  VTS_BOOT_L1_L2_Tests(bootHelperClass):
+class  vts_boot_L1_L2_tests(bootHelperClass):
     """
     Runs automated L1, L2 BOOT tests on the target device.
     Handles setup, service restarts, asset management.
@@ -77,6 +78,14 @@ class  VTS_BOOT_L1_L2_Tests(bootHelperClass):
         """
         self.utilities.change_directory(self.hal_session, self.targetWorkspace)
 
+        if self.platform.lower() == "vDevice".lower():
+            # Remove boot reason file if exists on vDevice platform
+            rmOutput = self.hal_session.write(f"rm {BOOT_REASON_FILE_ON_DEVICE}")
+            if rmOutput is True:
+                self.log.info(f"{BOOT_REASON_FILE_ON_DEVICE} file removed successfully")
+            else:
+                self.log.error(f"Unable to remove {BOOT_REASON_FILE_ON_DEVICE} file")
+
         self.utMenu.start()
 
         testsuites = self.testCaseConfiguration.fields.get('test_suites')
@@ -106,5 +115,5 @@ class  VTS_BOOT_L1_L2_Tests(bootHelperClass):
 if __name__ == '__main__':
     summaryLogName = os.path.splitext(os.path.basename(__file__))[0] + "_summery"
     summaryLog = logModule(summaryLogName, level=logModule.INFO)
-    test = VTS_BOOT_L1_L2_Tests(summaryLog)
+    test = vts_boot_L1_L2_tests(summaryLog)
     test.run(False)

@@ -36,6 +36,7 @@ from raft.framework.core.logModule import logModule
 from raft.framework.plugins.ut_raft.utSuiteNavigator import UTSuiteNavigatorClass
 from raft.framework.plugins.ut_raft.utBaseUtils import utBaseUtils
 from raft.framework.plugins.ut_raft.utUserResponse import utUserResponse
+from raft.framework.core.utPlaneController import utPlaneController
 
 BOOT_TEST_MENU_CONFIGURATION_FILE = os.path.join(dir_path, "vts_boot_testMenuConfiguration.yaml")
 BOOT_TESTCASES_CONFIGURATION_FILE = os.path.join(os.path.join(dir_path, "../configs"), "vts_boot_testcase_configuration.yaml")
@@ -117,3 +118,103 @@ class bootHelperClass(utHelperClass):
 
     def waitForBoot(self):
         return super().waitForBoot()
+    
+    def triggerBoot(self, trigger: str) -> bool:
+        """
+        This function sends a specified boot reason for booting up the device via ut-controller.
+
+        Args:
+          trigger (str): boot reason to be sent for booting up the device
+
+        Returns:
+          bool: True if the message was sent successfully, False otherwise.
+        """
+        yaml_content = ()
+        if trigger == "WATCHDOG":
+            yaml_content = (
+                "Boot:\n"
+                "  command: \"WATCHDOG\"\n"
+            )
+        elif trigger == "SOFTWARE_RESET":
+            yaml_content = (
+                "Boot:\n"
+                "  command: \"SOFTWARE_RESET\"\n"
+            )
+        elif trigger == "THERMAL_RESET":
+            yaml_content = (
+                "Boot:\n"
+                "  command: \"THERMAL_RESET\"\n"
+            )
+        elif trigger == "COLD_BOOT":
+            yaml_content = (
+                "Boot:\n"
+                "  command: \"COLD_BOOT\"\n"
+            )
+        elif trigger == "STR_AUTH_FAILURE":
+            yaml_content = (
+                "Boot:\n"
+                "  command: \"STR_AUTH_FAILURE\"\n"
+            )
+        else:
+            print("Unknown trigger\n")
+
+        # Send the command to ut-controller
+        self.controller.sendMessage(yaml_content)
+
+        return True
+
+    def rebootWithBootReason(self, expectedBootReason: str) -> bool:
+        """
+        This function verifies the boot reason after reboot.
+
+        Args:
+          expectedBootReason (str): The expected boot reason to verify against.
+
+        Returns:
+          bool: True if the boot reason matches the expected value, False otherwise.
+        """
+        self.hal_session = self.dut.getConsoleSession("default")
+        self.utilities.change_directory(self.hal_session, self.targetWorkspace)
+
+        # Trigger reboot with specified boot reason based on platform
+        if self.platform.lower() == "vDevice".lower():
+            self.deviceTestSetup = self.cpe.get("test")
+            self.controller = utPlaneController(self.session, port=self.deviceTestSetup.get("controller_port"), log=self.log)
+            self.port = self.deviceTestSetup.get("controller_port")
+            self.triggerBoot(expectedBootReason)
+        else:
+            input(f"Please bootup {self.platform} with the specified boot reason: {expectedBootReason} and press Enter to continue...")
+        
+        sleepTime = self.cpe.get("wait_time")
+        self.log.info(f"Waiting for {sleepTime} seconds to allow device to reboot...")
+        time.sleep(sleepTime)  # Wait for the configured time to allow device to reboot
+        self.hal_session.close()
+        result = self.waitForBoot()
+        if not result:
+            self.log.error(f"Device did not boot up successfully after {expectedBootReason} reboot.")
+            return False
+        
+    def runTestCaseWithBootReason(self, expectedBootReason: str) -> bool:
+        """
+        Runs the test case.
+
+        Returns:
+            bool: True if the test case passed, False otherwise.
+        """
+        self.utilities.change_directory(self.hal_session, self.targetWorkspace)
+        self.testcase = "checkBootReason"
+        self.profileConfiguration = ConfigRead(self.moduleHFPFile, self.profile_moduleName)
+
+        self.utilities.sftpCopy(self.hal_session, self.l3TestConfigFile, self.l3TestConfigFolder)
+
+        self.utMenu.start()
+
+        output =self.utMenu.select("VTS_L3_BOOT", self.testcase, None, self.waitTime, False)
+        results = self.utMenu.collect_results(output, True)
+        
+        # Validate Boot Reason WATCHDOG in results
+        bootReasonActual = output.strip()
+        if expectedBootReason in bootReasonActual:
+            self.log.info(f"Boot Reason '{expectedBootReason}' verified successfully after reboot.")
+
+        self.log.stepResult(results, f'Test Suit: {"VTS_L3_BOOT"} Test Case: {self.testcase}')

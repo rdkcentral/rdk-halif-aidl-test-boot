@@ -39,7 +39,7 @@ BOOT_L3_TEST_SUITE_NAME = "VTS_L3_BOOT"
 NON_PERSISTENT_FILE_PATH = "/tmp/"
 L3_TEST_CONFIG_FILE_NAME = "vts_l3_boot.txt"
 
-class  VTS_BOOT_L3_Reboot(bootHelperClass):
+class  vts_boot_L3_VerifyReboot_FULL_SYSTEM_RESET(bootHelperClass):
     """
     Runs L3 Set States test
     """
@@ -68,7 +68,11 @@ class  VTS_BOOT_L3_Reboot(bootHelperClass):
 
         self.utilities.sftpCopy(self.hal_session, self.l3TestConfigFile, self.l3TestConfigFolder)
         # Create a non-persistent file to test FULL_SYSTEM_RESET reboot
-        self.hal_session.write(f"touch {NON_PERSISTENT_FILE_PATH}{L3_TEST_CONFIG_FILE_NAME}")
+        touchOutput = self.hal_session.write(f"touch {NON_PERSISTENT_FILE_PATH}{L3_TEST_CONFIG_FILE_NAME}")
+        if touchOutput is True:
+            self.log.stepStart("Non-persistent file created before reboot...")
+        else:
+            self.log.error("Failed to create non-persistent file before reboot.")
 
         self.utMenu.start()
         promptWithAnswers = [
@@ -104,5 +108,5 @@ class  VTS_BOOT_L3_Reboot(bootHelperClass):
 if __name__ == '__main__':
     summaryLogName = os.path.splitext(os.path.basename(__file__))[0] + "_summery"
     summaryLog  = logModule(summaryLogName, level=logModule.INFO)
-    test = VTS_BOOT_L3_Reboot(summaryLog )
+    test = vts_boot_L3_VerifyReboot_FULL_SYSTEM_RESET(summaryLog )
     test.run(False)
