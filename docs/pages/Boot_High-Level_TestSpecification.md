@@ -40,5 +40,5 @@ The Boot interface provides essential functionalities for managing the boot proc
 
 |Test|Description|HAL APIs|
 |----|-----------|--------|
-|Test Reboot | Verify that the reboot API performs a reboot of the device with the specified reset types. | void reboot(in ResetType[] resetTypes), Capabilities getCapabilities(), BootReason getBootReason()|
-|Test getBootReason | Verify various reboot reasons specified like WATCHDOG, SOFTWARE_RESET, THERMAL_RESET, COLD_BOOT, STR_AUTH_FAILURE | BootReason getBootReason()|
+|Test Reboot | Verify that the reboot API performs a reboot of the device with the specified reset types like FULL_SYSTEM_RESET | void reboot(in ResetType[] resetTypes)|
+|Test getBootReason | Verify various reboot reasons specified like WATCHDOG, SOFTWARE_RESET, THERMAL_RESET, COLD_BOOT, STR_AUTH_FAILURE | BootReason getBootReason(), Capabilities getCapabilities()|
