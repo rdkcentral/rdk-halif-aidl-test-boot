@@ -36,7 +36,7 @@ from raft.framework.plugins.ut_raft.utSuiteNavigator import UTSuiteNavigatorClas
 from raft.framework.plugins.ut_raft.utBaseUtils import utBaseUtils
 from vts_boot_helper import bootHelperClass
 
-class  vts_boot_L3_VerifyBootReason_THERMAL_RESET(bootHelperClass):
+class  vts_boot_L3_VerifyBootReason(bootHelperClass):
     """
     Runs L3 Set States test
     """
@@ -44,26 +44,26 @@ class  vts_boot_L3_VerifyBootReason_THERMAL_RESET(bootHelperClass):
         """
         Initializes the test class
         """
-        self.testName = "BOOT_L3_VerifyBootReason_THERMAL_RESET"
+        self.testName = "BOOT_L3_VerifyBootReason"
         qcId = "1"
         
         super().__init__(self.testName, qcId, log)
 
     def testFunction(self):
         """
-        The main test function to run the L3 Boot reboot with boot reason THERMAL_RESET and verify it.
+        The main test function to run the L3 Boot reboot with boot reason specified in yaml file and verify it.
+
         Returns:
             bool: Final result of the test.
         """
-        bootReasonExpected = "THERMAL_RESET"
-        self.rebootWithBootReason(expectedBootReason=bootReasonExpected)
-
-        super().__init__(self.testName, "1", self.log) #Reinitialize after reboot
-
-        self.runTestCaseWithBootReason(bootReasonExpected)
+        for bootReason in self.l3TestConfig.L3.BootReason:
+            bootReasonExpected = bootReason
+            self.rebootWithBootReason(expectedBootReason=bootReasonExpected)
+            super().__init__(self.testName, "1", self.log) #Reinitialize after reboot
+            self.runTestCaseWithBootReason(bootReasonExpected)
 
 if __name__ == '__main__':
     summaryLogName = os.path.splitext(os.path.basename(__file__))[0] + "_summery"
     summaryLog  = logModule(summaryLogName, level=logModule.INFO)
-    test = vts_boot_L3_VerifyBootReason_THERMAL_RESET(summaryLog )
+    test = vts_boot_L3_VerifyBootReason(summaryLog )
     test.run(False)

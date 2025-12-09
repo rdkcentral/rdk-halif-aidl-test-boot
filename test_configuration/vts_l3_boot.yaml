@@ -1,0 +1,8 @@
+Boot:
+  L3:
+    BootReason:
+     - COLD_BOOT
+     - SOFTWARE_RESET
+     - STR_AUTH_FAILURE
+     - THERMAL_RESET
+     - WATCHDOG

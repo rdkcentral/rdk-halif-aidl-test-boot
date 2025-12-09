@@ -99,17 +99,17 @@ class  vts_boot_L1_L2_tests(bootHelperClass):
             test_cases = testsuite.get("test_cases")
 
             if len(test_cases) == 1 and test_cases[0] == "all":
-                self.log.stepStart(f'Test Suit: {testsuite_name} Run all Tests cases')
+                self.log.stepStart(f'Test Suite: {testsuite_name} Run all Tests cases')
                 # If 'all' test case mentioned in list, run all tests with 'r' option
                 result = self.runTest(testsuite)
-                self.log.stepResult(result, f'Test Suit: {testsuite_name} Run all Tests cases')
+                self.log.stepResult(result, f'Test Suite: {testsuite_name} Run all Tests cases')
             else:
                 for test_case in testsuite.get("test_cases"):
-                    self.log.stepStart(f'Test Suit: {testsuite_name} Test Case: {test_case}')
+                    self.log.stepStart(f'Test Suite: {testsuite_name} Test Case: {test_case}')
                     result = self.runTest(testsuite, test_case)
                     if not result:
                         finalresult = False
-                    self.log.stepResult(result, f'Test Suit: {testsuite_name} Test Case: {test_case}')
+                    self.log.stepResult(result, f'Test Suite: {testsuite_name} Test Case: {test_case}')
         return finalresult
 
 if __name__ == '__main__':

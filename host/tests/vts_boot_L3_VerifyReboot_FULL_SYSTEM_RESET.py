@@ -66,7 +66,6 @@ class  vts_boot_L3_VerifyReboot_FULL_SYSTEM_RESET(bootHelperClass):
         
         self.profileConfiguration = ConfigRead(self.moduleHFPFile, self.profile_moduleName)
 
-        self.utilities.sftpCopy(self.hal_session, self.l3TestConfigFile, self.l3TestConfigFolder)
         # Create a non-persistent file to test FULL_SYSTEM_RESET reboot
         touchOutput = self.hal_session.write(f"touch {NON_PERSISTENT_FILE_PATH}{L3_TEST_CONFIG_FILE_NAME}")
         if touchOutput is True:

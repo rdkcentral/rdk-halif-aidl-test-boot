@@ -296,7 +296,7 @@ elif [ "$1" == "dist_clean" ]; then
     dist_clean_test
 elif [ "$1" == "help" ]; then
     help
-elif [[ "$1" == [Tt]arget=* ]]; then
+elif [[ "$1" == target=* || "$1" == Target=* || "$1" == TARGET=* ]]; then
     install_linux_binder
     generate_hal_interfaces
     build_aidl_libs

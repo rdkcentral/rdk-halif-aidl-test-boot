@@ -76,7 +76,7 @@ class bootHelperClass(utHelperClass):
         self.platform = self.cpe.get("platform")
 
         # Load test menu and test case configuration files
-        self.l3TestConfigFile = BOOT_L3_TEST_CONFIG_FILE
+        self.l3TestConfig = ConfigRead(BOOT_L3_TEST_CONFIG_FILE, self.moduleName)
         self.testMenuConfiguration = ConfigRead(BOOT_TEST_MENU_CONFIGURATION_FILE, self.moduleName)
         self.testCaseConfiguration = ConfigRead(BOOT_TESTCASES_CONFIGURATION_FILE, self.moduleName)
         self.testMenuConfiguration.test.execute = self.testMenuConfiguration.test.execute + f" -p {profileOnTarget}"
@@ -204,8 +204,6 @@ class bootHelperClass(utHelperClass):
         self.utilities.change_directory(self.hal_session, self.targetWorkspace)
         self.testcase = "checkBootReason"
         self.profileConfiguration = ConfigRead(self.moduleHFPFile, self.profile_moduleName)
-
-        self.utilities.sftpCopy(self.hal_session, self.l3TestConfigFile, self.l3TestConfigFolder)
 
         self.utMenu.start()
 
