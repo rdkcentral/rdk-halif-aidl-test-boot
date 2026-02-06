@@ -21,8 +21,8 @@
 
 This document provides an overview of the testing requirements for the Boot module. It outlines the scope of testing, objectives, testing levels and approaches and specific test requirements.
 
-- Boot Interface Definitions - [Boot HAL](https://github.com/rdkcentral/rdk-halif-aidl/tree/0.12.0/boot/current/com/rdk/hal/boot)
-- Boot Feature Profile - [HFP-Boot](https://github.com/rdkcentral/rdk-halif-aidl/blob/0.12.0/boot/current/hfp-boot.yaml)
+- Boot Interface Definitions - [Boot HAL](https://github.com/rdkcentral/rdk-halif-aidl/tree/0.13.1/boot/current/com/rdk/hal/boot)
+- Boot Feature Profile - [HFP-Boot](https://github.com/rdkcentral/rdk-halif-aidl/blob/0.13.1/boot/current/hfp-boot.yaml)
 
 ## Module Description
 
@@ -33,12 +33,14 @@ The Boot interface provides essential functionalities for managing the boot proc
 
 |Test|Description|HAL APIs|
 |----|-----------|--------|
-|Test Set/Get Boot Reason| Verify that the setBootReason/getBootReason API sets/returns the correct reason for the device boot. Note: This is a placehoder and will be finalized after setBootReason() is made available| BootReason getBootReason(), setBootReason|
+|Test Set/Get Boot Reason| Verify that the setBootReason/getBootReason API sets/returns the correct reason for the device boot. | BootReason getBootReason(), setBootReason|
 
 
 ## L3 Test Specification
 
 |Test|Description|HAL APIs|
 |----|-----------|--------|
-|Test Reboot | Verify that the reboot API performs a reboot of the device with the specified reset types like FULL_SYSTEM_RESET | void reboot(in ResetType[] resetTypes)|
-|Test getBootReason | Verify various reboot reasons specified like WATCHDOG, SOFTWARE_RESET, THERMAL_RESET, COLD_BOOT, STR_AUTH_FAILURE | BootReason getBootReason(), Capabilities getCapabilities()|
+| Test Reboot | Verify reboot API behavior for following reset types:<br>• **FULL_SYSTEM_RESET** – persistent data deleted, boot reason = WARM_RESET<br>• **INVALIDATE_CURRENT_APPLICATION_IMAGE** – current image invalidated, alternate bank selected(if supported), boot reason = WARM_RESET<br>• **FORCE_DISASTER_RECOVERY** – recovery services running, boot reason = WARM_RESET<br>• **MAINTENANCE_REBOOT** – boot reason = MAINTENANCE_REBOOT<br>• **SOFTWARE_REBOOT** – boot reason = WARM_RESET. Also validate bootreason for all the scenarios | void reboot(ResetType resetType, String reasonString);<br>BootReason getBootReason(); |
+|Test getBootReason | Verify various reboot reasons specified like: <br>• **WATCHDOG** - triggered by disabling watchdog feed, <br>• **MAINTENANCE_REBOOT** - triggered by API call, <br>• **THERMAL_RESET** - triggered by putting device in heat chamber , <br>• **WARM_RESET** - triggered by API call, <br>• **COLD_BOOT** - triggered by pulling out power supply and plugging it back, <br>• **STR_AUTH_FAILURE** - triggered by using specialized bootloader that can corrupt STR auth token/signature | BootReason getBootReason(), Capabilities getCapabilities()|
+|Test getPowerSource|Transition between different power source and verify various power source like: <br>• **PSU** - power source is from an external PSU , <br>• **USB** - power source is from USB, <br>• **POE** - power source is from Power over Ethernet|PowerSource getPowerSource();|
+| Test boot reason override behavior | Verify that the boot reason can be overridden only when the reset type is SOFTWARE_REBOOT. When setBootReason() is called prior to reboot: <br>• For SOFTWARE_REBOOT, confirm the boot reason is overridden after reboot. <br>• For any other reset type, confirm the boot reason is not overridden. | void setBootReason(BootReason reason, String reasonString), void reboot(ResetType resetType, String reasonString), BootReason getBootReason() |
