@@ -93,11 +93,11 @@ public:
     }
 };
 
+// Test case to validate reboot() method of boot interface
 UT_ADD_TEST(VTS_L3_BOOT, reboot_system)
 {
     android::sp<com::rdk::hal::boot::IBoot> bootHandle = gBOOTHandle;
     com::rdk::hal::boot::ResetType uResetType;
-    std::vector<com::rdk::hal::boot::ResetType> resetTypes;
     UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
 
     std::string result;
@@ -107,10 +107,11 @@ UT_ADD_TEST(VTS_L3_BOOT, reboot_system)
         UT_LOG_INFO(" %s : %d\n", com::rdk::hal::boot::toString(resetType).c_str(), resetType);
     }
     scanf("%d", (int*)&uResetType); // taking input for reset type
-    resetTypes.push_back(uResetType);
-    BOOT_REBOOT_SUCCESS(bootHandle, resetTypes);
+    ::android::String16 reasonString = android::String16(com::rdk::hal::boot::toString(uResetType).c_str());
+    BOOT_REBOOT_SUCCESS(bootHandle, uResetType, reasonString);
 }
 
+// Test case to validate getBootReason() method of boot interface and check if it matches with supported boot reasons
 UT_ADD_TEST(VTS_L3_BOOT, checkBootReason)
 {
     android::sp<com::rdk::hal::boot::IBoot> bootHandle = gBOOTHandle;
@@ -130,7 +131,29 @@ UT_ADD_TEST(VTS_L3_BOOT, checkBootReason)
     }
 }
 
+// Test case to validate getPowerSource() method of boot interface
+UT_ADD_TEST(VTS_L3_BOOT, checkPowerSource)
+{
+    android::sp<com::rdk::hal::boot::IBoot> bootHandle = gBOOTHandle;
+    UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
+    com::rdk::hal::boot::PowerSource powerSource;
+    BOOT_GETPOWERSOURCE_SUCCESS(bootHandle, powerSource);
+    UT_LOG_DEBUG("Power Source: %s", com::rdk::hal::boot::toString(powerSource).c_str());
+}
 
+// Test case to validate override of setBootReason() method of boot interface 
+// and check if the set reason is correctly returned by getBootReason()
+UT_ADD_TEST(VTS_L3_BOOT, overrideBootReason)
+{
+    android::sp<com::rdk::hal::boot::IBoot> bootHandle = gBOOTHandle;
+    UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
+    com::rdk::hal::boot::BootReason bootReasonToSet = com::rdk::hal::boot::BootReason::MAINTENANCE_REBOOT;
+    std::string reasonString = "Test boot reason from overrideBootReason test case";
+    BOOT_SETBOOTREASON_SUCCESS(bootHandle, bootReasonToSet, reasonString);
+
+    UT_LOG_INFO("Boot reason set using setBootReason: %s", com::rdk::hal::boot::toString(bootReasonToSet).c_str());
+    UT_LOG_INFO("Now reboot the system to check if override works as expected, select test 1 : reboot_system\n");
+}
 
 /**
 * @} // End of BOOT_HALTEST_CLASS
@@ -138,4 +161,4 @@ UT_ADD_TEST(VTS_L3_BOOT, checkBootReason)
 * @} // End of BOOT
 * @} // End of HPK
 */
-/* End of vts_boot_l1_tests.cpp */
+/* End of vts_boot_l3_tests.cpp */

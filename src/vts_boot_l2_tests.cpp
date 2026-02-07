@@ -1,0 +1,127 @@
+/*
+ * If not stated otherwise in this file or this component's LICENSE file the
+ * following copyright and licenses apply:
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * @addtogroup HPK Hardware Porting Kit
+ * @{
+ * @par The Hardware Porting Kit
+ * HPK is the next evolution of the well-defined Hardware Abstraction Layer
+ * (HAL), but augmented with more comprehensive documentation and test suites
+ * that OEM or SOC vendors can use to self-certify their ports before taking
+ * them to RDKM for validation or to an operator for final integration and
+ * deployment. The Hardware Porting Kit effectively enables an OEM and/or SOC
+ * vendor to self-certify their own Video Accelerator devices, with minimal RDKM
+ * assistance.
+ *
+ */
+
+/**
+ * @addtogroup BOOT Module
+ * @{
+ */
+
+/**
+ * @addtogroup BOOT_HALTEST BOOT HAL Tests
+ * @{
+ */
+
+/**
+ * @defgroup BOOT_HALTEST_CLASS BOOT HAL Tests L2 Test Cases
+ * @{
+ * @parblock
+ *
+ * ### Common functions/macros required for the BOOT module :
+ *
+ * Common functions/macros required for the BOOT module .
+ *
+ * **Pre-Conditions:**  None @n
+ * **Dependencies:** None @n
+ *
+ * @endparblock
+ *
+ */
+
+/**
+ * @file vts_boot_l2_tests.cpp
+ * @brief L2 Test Cases for the BOOT HAL (Hardware Abstraction Layer) interface.
+ *
+ * This file contains unit tests for the BOOT module as part of the Hardware Porting Kit (HPK).
+ * The tests validate the correct implementation of the IBoot interface, including its capabilities,
+ * versioning, and property handling functionalities.
+ *
+ * @addtogroup HPK Hardware */
+
+
+#include <ut_log.h>
+#include <ut_kvp_profile.h>
+
+#include "vts_boot.h"
+
+extern android::sp<com::rdk::hal::boot::IBoot> gBOOTHandle;
+
+/* Test class registration with UT_Core */
+UT_ADD_TEST_TO_GROUP(VTS_L2_BOOT, UT_TESTS_L2)
+
+class VTS_L2_BOOT : public UTCore
+{
+public:
+    VTS_L2_BOOT() : UTCore() {}
+
+    ~VTS_L2_BOOT() override = default;
+
+    void SetUp() override
+    {
+        android::ProcessState::self()->startThreadPool();
+    }
+
+    void TearDown() override
+    {
+    }
+};
+
+// Test case to validate set and get boot reason for user provided boot reason and check if the set reason matches the returned reason
+UT_ADD_TEST(VTS_L2_BOOT, setAndGetBootReason)
+{
+    android::sp<com::rdk::hal::boot::IBoot> bootHandle = gBOOTHandle;
+    UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
+    std::string result;
+    com::rdk::hal::boot::BootReason uBootReasonToSet;
+
+    UT_LOG_INFO("Enter boot reasons from below options:");
+    for(const auto &bootReason : android::internal::enum_values<com::rdk::hal::boot::BootReason>)
+    {
+        UT_LOG_INFO(" %s : %d\n", com::rdk::hal::boot::toString(bootReason).c_str(), bootReason);
+    }
+    scanf("%d", (int*)&uBootReasonToSet); // taking input for boot reason
+    std::string reasonString = com::rdk::hal::boot::toString(uBootReasonToSet);
+
+    BOOT_SETBOOTREASON_SUCCESS(bootHandle, uBootReasonToSet, reasonString);
+
+    com::rdk::hal::boot::BootReason bootReasonReturned;
+    BOOT_GETBOOTREASON_SUCCESS(bootHandle, bootReasonReturned);
+
+    // Validate that the set boot reason matches the returned boot reason
+    UT_ASSERT_EQUAL(uBootReasonToSet, bootReasonReturned);
+}
+
+/**
+* @} // End of BOOT_HALTEST_CLASS
+* @} // End of BOOT_HALTEST
+* @} // End of BOOT
+* @} // End of HPK
+*/
+/* End of vts_boot_l2_tests.cpp */
