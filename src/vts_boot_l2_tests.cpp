@@ -102,20 +102,20 @@ UT_ADD_TEST(VTS_L2_BOOT, setAndGetBootReason)
     com::rdk::hal::boot::BootReason uBootReasonToSet;
 
     UT_LOG_INFO("Enter boot reasons from below options:");
-    for(const auto &bootReason : android::internal::enum_values<com::rdk::hal::boot::BootReason>)
+    for (const auto &bootReason : android::internal::enum_values<com::rdk::hal::boot::BootReason>)
     {
         UT_LOG_INFO(" %s : %d\n", com::rdk::hal::boot::toString(bootReason).c_str(), bootReason);
+        std::string reasonString = com::rdk::hal::boot::toString(bootReason);
+
+        BOOT_SETBOOTREASON_SUCCESS(bootHandle, bootReason, reasonString);
+        sleep(1); // Sleep for a short duration to ensure the boot reason is set before we attempt to get it back
+
+        com::rdk::hal::boot::BootReason bootReasonReturned;
+        BOOT_GETBOOTREASON_SUCCESS(bootHandle, bootReasonReturned);
+
+        // Validate that the set boot reason matches the returned boot reason
+        UT_ASSERT_STRING_EQUAL(reasonString.c_str(), com::rdk::hal::boot::toString(bootReasonReturned).c_str());
     }
-    scanf("%d", (int*)&uBootReasonToSet); // taking input for boot reason
-    std::string reasonString = com::rdk::hal::boot::toString(uBootReasonToSet);
-
-    BOOT_SETBOOTREASON_SUCCESS(bootHandle, uBootReasonToSet, reasonString);
-
-    com::rdk::hal::boot::BootReason bootReasonReturned;
-    BOOT_GETBOOTREASON_SUCCESS(bootHandle, bootReasonReturned);
-
-    // Validate that the set boot reason matches the returned boot reason
-    UT_ASSERT_EQUAL(uBootReasonToSet, bootReasonReturned);
 }
 
 /**

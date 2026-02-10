@@ -102,38 +102,49 @@ UT_ADD_TEST(VTS_L1_BOOT, getCapabilities_pos)
     BOOT_GETCAPABILITIES_SUCCESS(bootHandle, capabilities);
     const std::string baseKey = "boot/supportedResetTypes";
     UT_ASSERT_EQUAL(capabilities.supportedResetTypes.size(), UT_KVP_PROFILE_GET_LIST_COUNT(baseKey.c_str()));
+    bool found = false;
     for (const auto &resetTypes : capabilities.supportedResetTypes)
     {
         const std::string resetTypesStr = android::internal::ToString(resetTypes);
         UT_LOG_DEBUG("Supported resetTypesStr: %s\n", resetTypesStr.c_str());
         std::string key;
-        for(int i = 0;i < (int)capabilities.supportedResetTypes.size(); i++)
+        for (int i = 0; i < (int)capabilities.supportedResetTypes.size(); i++)
         {
-            key = baseKey + "." + std::to_string(i) + "." + resetTypesStr;
-            if (ut_kvp_fieldPresent(ut_kvp_profile_getInstance(), key.c_str()))
+            key = baseKey + "/" + std::to_string(i);
+            char value[UT_KVP_MAX_ELEMENT_SIZE] = {0};
+            if (ut_kvp_getStringField(ut_kvp_profile_getInstance(), key.c_str(), value, sizeof(value)) == UT_KVP_STATUS_SUCCESS)
             {
-                UT_ASSERT_TRUE(true); // Key found
-                break;
+                if (strcmp(value, resetTypesStr.c_str()) == 0) // Validate that the reset type string in profile matches with the reset type string from capabilities
+                {
+                    found = true;
+                }
             }
         }
     }
+    UT_ASSERT_TRUE(found); // Validate that each reset type from capabilities is present in profile
+
     const std::string baseKeyBootReasons = "boot/supportedBootReasons";
     UT_ASSERT_EQUAL(capabilities.supportedBootReasons.size(), UT_KVP_PROFILE_GET_LIST_COUNT(baseKeyBootReasons.c_str()));
+    found = false;
     for (const auto &bootReason : capabilities.supportedBootReasons)
     {
         const std::string bootReasonStr = android::internal::ToString(bootReason);
         UT_LOG_DEBUG("Supported bootReasonStr: %s\n", bootReasonStr.c_str());
         std::string key;
-        for(int i = 0;i < (int)capabilities.supportedBootReasons.size(); i++)
+        for (int i = 0; i < (int)capabilities.supportedBootReasons.size(); i++)
         {
-            key = baseKeyBootReasons + "." + std::to_string(i) + "." + bootReasonStr;
-            if (ut_kvp_fieldPresent(ut_kvp_profile_getInstance(), key.c_str()))
+            key = baseKeyBootReasons + "/" + std::to_string(i);
+            char value[UT_KVP_MAX_ELEMENT_SIZE] = {0};
+            if (ut_kvp_getStringField(ut_kvp_profile_getInstance(), key.c_str(), value, sizeof(value)) == UT_KVP_STATUS_SUCCESS)
             {
-                UT_ASSERT_TRUE(true); // Key found
-                break;
+                if (strcmp(value, bootReasonStr.c_str()) == 0) // Validate that the boot reason string in profile matches with the boot reason string from capabilities
+                {
+                    found = true;
+                }
             }
         }
     }
+    UT_ASSERT_TRUE(found); // Validate that each boot reason from capabilities is present in profile
 }
 
 // Test case to validate setBootReason() method of boot interface, positive case
@@ -171,19 +182,18 @@ UT_ADD_TEST(VTS_L1_BOOT, getBootReason_pos)
 
     // Validate that the returned boot reason is among the supported boot reasons in capabilities
     com::rdk::hal::boot::Capabilities capabilities;
+    bool reasonMatched = false;
     BOOT_GETCAPABILITIES_SUCCESS(bootHandle, capabilities);
     for(const auto &reason : capabilities.supportedBootReasons)
     {
         if(bootReason == reason)
         {
             UT_PASS("Boot reason from getBootReason() is among supported boot reasons in capabilities");
+            reasonMatched = true;
             break;
         }
-        else
-        {
-            UT_FAIL("Boot reason from getBootReason() is not among supported boot reasons in capabilities");
-        }
     }
+    UT_ASSERT_TRUE(reasonMatched); // Validate that the returned boot reason is among supported boot reasons in capabilities
 }
 
 // Test case to validate reboot() method of boot interface, negative case with unsupported reset type
@@ -198,7 +208,6 @@ UT_ADD_TEST(VTS_L1_BOOT, reboot_neg)
 
     // Using empty reason string to test negative case
     BOOT_REBOOT_FAILURE(bootHandle, com::rdk::hal::boot::ResetType::FULL_SYSTEM_RESET, android::String16(""), ::android::binder::Status::EX_ILLEGAL_ARGUMENT);
-    UT_ASSERT_TRUE(true); // Makes sure reboot call fails as expected
 }
 
 // Test case to validate getPowerSource() method of boot interface, positive case
@@ -211,18 +220,22 @@ UT_ADD_TEST(VTS_L1_BOOT, getPowerSource_pos)
 
     // Validate that the returned power source matches the supported power sources in profile
     const std::string baseKey = "boot/supportedPowerSources";
+    bool powerSourceMatched = false;
     for (int32_t i = 0; i < UT_KVP_PROFILE_GET_LIST_COUNT(baseKey.c_str()); i++)
     {
         char value[UT_KVP_MAX_ELEMENT_SIZE] = {0};
-        if (ut_kvp_getStringField(ut_kvp_profile_getInstance(), (baseKey + "." + std::to_string(i)).c_str(), value, sizeof(value)) == UT_KVP_STATUS_SUCCESS)
+        std::string key = baseKey + "/" + std::to_string(i);
+        if (ut_kvp_getStringField(ut_kvp_profile_getInstance(), key.c_str(), value, sizeof(value)) == UT_KVP_STATUS_SUCCESS)
         {
-            if (value == android::internal::ToString(powerSource))
+            if (strcmp(value, android::internal::ToString(powerSource).c_str()) == 0) // Validate that the power source string in profile matches with the power source string from getPowerSource()
             {
                 UT_PASS("Power source from getPowerSource() is among supported power sources in profile");
+                powerSourceMatched = true;
                 break;
             }
         }
     }
+    UT_ASSERT_TRUE(powerSourceMatched); // Validate that the returned power source matches the supported power sources in profile
 }
 
 

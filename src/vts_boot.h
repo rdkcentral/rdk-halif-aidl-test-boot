@@ -69,6 +69,7 @@
 #include <utils/String16.h>
 
 #include "com/rdk/hal/boot/IBoot.h"
+#include <iostream>
 
 // Macro for getCapabilities - positive case
 #define BOOT_GETCAPABILITIES_SUCCESS(bootHandle, capabilities)                 \

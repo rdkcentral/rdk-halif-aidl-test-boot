@@ -15,7 +15,7 @@ git clone -b develop 'https://github.com/rdkcentral/linux_binder_idl.git'
 
 cd linux_binder_idl
 
-sc docker run rdk-kirkstone /bin/bash //preferred
+sc docker run rdk-kirkstone /bin/bash # preferred
 
 ./build-linux-binder-aidl.sh 64
 ```
@@ -32,7 +32,7 @@ git clone git@github.com:rdkcentral/rdk-halif-aidl-test-boot.git
 cd rdk-halif-aidl-test-boot
 ```
 
-Set below environment variable:
+Set the following environment variables:
 
 - AIDL_BIN: Path to the `AIDL` compiler (e.g., /path/to/linux_binder_idl/out/aidl).
 
@@ -99,7 +99,7 @@ cd boot
 
 - Run the VTS Test on Target Device
 
-Run below command to execute the VTS Test:
+Run the following command to execute the VTS Test:
 
 ```bash
 ./run.sh -p profiles/hfp-boot-vcomponent.yaml

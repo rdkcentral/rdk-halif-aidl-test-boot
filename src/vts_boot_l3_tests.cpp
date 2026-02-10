@@ -40,7 +40,7 @@
  */
 
 /**
- * @defgroup BOOT_HALTEST_CLASS BOOT HAL Tests L1 Test Cases
+ * @defgroup BOOT_HALTEST_CLASS BOOT HAL Tests L3 Test Cases
  * @{
  * @parblock
  *
@@ -56,8 +56,8 @@
  */
 
 /**
- * @file vts_boot_l1_tests.cpp
- * @brief L1 Test Cases for the BOOT HAL (Hardware Abstraction Layer) interface.
+ * @file vts_boot_l3_tests.cpp
+ * @brief L3 Test Cases for the BOOT HAL (Hardware Abstraction Layer) interface.
  *
  * This file contains unit tests for the BOOT module as part of the Hardware Porting Kit (HPK).
  * The tests validate the correct implementation of the IBoot interface, including its capabilities,
@@ -100,13 +100,32 @@ UT_ADD_TEST(VTS_L3_BOOT, reboot_system)
     com::rdk::hal::boot::ResetType uResetType;
     UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
 
-    std::string result;
     UT_LOG_INFO("Enter reset types from below options:");
     for(const auto &resetType : android::internal::enum_values<com::rdk::hal::boot::ResetType>)
     {
         UT_LOG_INFO(" %s : %d\n", com::rdk::hal::boot::toString(resetType).c_str(), resetType);
     }
-    scanf("%d", (int*)&uResetType); // taking input for reset type
+    int resetTypeInt;
+    std::cin >> resetTypeInt; // taking input for reset type
+    uResetType = static_cast<com::rdk::hal::boot::ResetType>(resetTypeInt);
+    bool validResetType = false;
+
+    for(const auto &resetType : android::internal::enum_values<com::rdk::hal::boot::ResetType>)
+    {
+        if(resetType == uResetType)
+        {
+            UT_LOG_INFO("Selected reset type: %s\n", com::rdk::hal::boot::toString(uResetType).c_str());
+            validResetType = true;
+            break;
+        }
+    }
+    UT_ASSERT_TRUE(validResetType); // Validate that the input reset type is valid
+    if (!validResetType)
+    {
+        UT_LOG_ERROR("Invalid reset type selected: %s\n", com::rdk::hal::boot::toString(uResetType).c_str());
+        return;
+    }
+
     ::android::String16 reasonString = android::String16(com::rdk::hal::boot::toString(uResetType).c_str());
     BOOT_REBOOT_SUCCESS(bootHandle, uResetType, reasonString);
 }
@@ -121,14 +140,18 @@ UT_ADD_TEST(VTS_L3_BOOT, checkBootReason)
     com::rdk::hal::boot::Capabilities capabilities;
     BOOT_GETCAPABILITIES_SUCCESS(bootHandle, capabilities);
     UT_LOG_DEBUG("Boot Reason: %s", com::rdk::hal::boot::toString(bootReason).c_str());
+    bool reasonMatched = false;
     for(const auto &reason : capabilities.supportedBootReasons)
     {
         if(bootReason == reason)
         {
             UT_LOG_INFO("Boot Reason matched with supported reasons: %s", com::rdk::hal::boot::toString(bootReason).c_str());
+            reasonMatched = true;
             break;
         }
     }
+
+    UT_ASSERT_TRUE(reasonMatched); // Validate that the returned boot reason is among supported boot reasons in capabilities);
 }
 
 // Test case to validate getPowerSource() method of boot interface
