@@ -36,7 +36,7 @@ from raft.framework.core.logModule import logModule
 def Runall_L3():
     skipTests = []
 
-    summary_log_name = f"{os.path.splitext(os.path.basename(__file__))[0]}_summery"
+    summary_log_name = f"{os.path.splitext(os.path.basename(__file__))[0]}_summary"
     summaryLogL3 = logModule(summary_log_name, level=logModule.INFO)
 
     test_directory = Path(dir_path)
@@ -72,15 +72,15 @@ def Runall_L3():
         except (ImportError, AttributeError) as e:
             summaryLogL3.error(f"Failed to import {module_name}: {e}")
 def Run_L1L2():
-    SummerLogL1L2 = logModule("vts_boot_L1L2", level=logModule.INFO)
+    summaryLogL1L2 = logModule("vts_boot_L1L2", level=logModule.INFO)
     test_module_name = "vts_boot_L1_L2_tests"
     try:
         module = importlib.import_module(test_module_name)
         test_class = getattr(module, "vts_boot_L1_L2_tests")
-        test_instance = test_class(SummerLogL1L2)
+        test_instance = test_class(summaryLogL1L2)
         test_instance.run(False)
     except (ImportError, AttributeError) as e:
-        SummerLogL1L2.error(f"Failed to import {test_module_name}: {e}")
+        summaryLogL1L2.error(f"Failed to import {test_module_name}: {e}")
 
 if __name__ == '__main__':
     Run_L1L2()

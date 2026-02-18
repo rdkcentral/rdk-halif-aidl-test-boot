@@ -24,7 +24,7 @@ Boot:
     test:
         artifacts:
         #List of artifacts folders, test class copies the content of folder to the target device workspace
-          - "../../build/bin/vts-Boot.tar.gz"
+          - "../../build/bin/vts-boot.tar.gz"
         # execute command, this will appended with the target device workspace path
         execute: "./run.sh"
         type: UT-C # C (UT-C Cunit) / C++ (UT-G (g++ ut-core gtest backend))
@@ -33,10 +33,19 @@ Boot:
                 name: "VTS_L1_BOOT"
                 tests: 
                     - "getCapabilities_pos"
+                    - "setBootReason_pos"
+                    - "setBootReason_neg"
                     - "getBootReason_pos"
                     - "reboot_neg"
+                    - "getPowerSource_pos"
             1:
+                name: "VTS_L2_BOOT"
+                tests:
+                    - "setAndGetBootReason"
+            2:
                 name: "VTS_L3_BOOT"
                 tests:
-                    - "reboot_system"
+                    - "rebootSystem"
                     - "checkBootReason"
+                    - "checkPowerSource"
+                    - "overrideBootReason"

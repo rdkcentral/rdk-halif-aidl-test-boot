@@ -112,6 +112,7 @@ UT_ADD_TEST(VTS_L1_BOOT, getCapabilities_pos)
         {
             key = baseKey + "/" + std::to_string(i);
             char value[UT_KVP_MAX_ELEMENT_SIZE] = {0};
+            found = false;
             if (ut_kvp_getStringField(ut_kvp_profile_getInstance(), key.c_str(), value, sizeof(value)) == UT_KVP_STATUS_SUCCESS)
             {
                 if (strcmp(value, resetTypesStr.c_str()) == 0) // Validate that the reset type string in profile matches with the reset type string from capabilities
@@ -134,6 +135,7 @@ UT_ADD_TEST(VTS_L1_BOOT, getCapabilities_pos)
         for (int i = 0; i < (int)capabilities.supportedBootReasons.size(); i++)
         {
             key = baseKeyBootReasons + "/" + std::to_string(i);
+            found = false;
             char value[UT_KVP_MAX_ELEMENT_SIZE] = {0};
             if (ut_kvp_getStringField(ut_kvp_profile_getInstance(), key.c_str(), value, sizeof(value)) == UT_KVP_STATUS_SUCCESS)
             {

@@ -85,21 +85,21 @@ function install_pip_requirements()
 
     if [ ! -f ${requirements_file} ]; then
         WARNING "No ${requirements_file} found"
-        return  # Exit the function if the file exists
+        return  # Exit the function if the file does not exist
     fi
 
     INFO "install_pip_requirements( ${requirements_file} ):"
     if pip install -r "$requirements_file"; then
         INFO "pip install completed"
     else
-        ERROR "process_and_update_sha(): pip install failed."
+        ERROR "install_pip_requirements(): pip install failed."
         return 1  # Exit the function with error code
     fi
 }
 
 function clone_repo()
 {
-    # Requirment it to clone only if not present.
+    # Requirement is it to clone only if not present.
     local repo_url="$1"
     local path="$2"
     local version="$3"
@@ -162,7 +162,7 @@ clone_repo git@github.com:rdkcentral/python_raft.git "${RAFT_DIR}" "1.8.0" "in .
 install_pip_requirements "${RAFT_DIR}"/requirements.txt
 
 # Setup ut-raft
-clone_repo git@github.com:rdkcentral/ut-raft.git "${PLUGINS_FRAMEWORK_DIR}/ut_raft" develop "in ./raft/framework/plugins"
+clone_repo git@github.com:rdkcentral/ut-raft.git "${PLUGINS_FRAMEWORK_DIR}/ut_raft" 2.1.2 "in ./raft/framework/plugins"
 install_pip_requirements "${PLUGINS_FRAMEWORK_DIR}"/ut_raft/requirements.txt
 
 ## Install your own sub git repo's in here as required

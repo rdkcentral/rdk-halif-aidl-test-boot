@@ -23,18 +23,12 @@
 
 import os
 import sys
-import time
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(dir_path, "../"))
 
-from raft.framework.plugins.ut_raft.configRead import ConfigRead
-from raft.framework.core.logModule import logModule
-from raft.framework.core.utPlaneController import utPlaneController
-from raft.framework.plugins.ut_raft import utHelperClass
-from raft.framework.plugins.ut_raft.utSuiteNavigator import UTSuiteNavigatorClass
-from raft.framework.plugins.ut_raft.utBaseUtils import utBaseUtils
 from vts_boot_helper import bootHelperClass
+from raft.framework.core.logModule import logModule
 
 class  vts_boot_L3_VerifyBootReason(bootHelperClass):
     """
@@ -56,14 +50,21 @@ class  vts_boot_L3_VerifyBootReason(bootHelperClass):
         Returns:
             bool: Final result of the test.
         """
+        totatlResult = True
         for bootReason in self.l3TestConfig.L3.BootReason:
             bootReasonExpected = bootReason
-            self.rebootWithBootReason(expectedBootReason=bootReasonExpected)
+            self.log.stepStart(f"Starting test for boot reason: {bootReasonExpected}")
+            boot_result = self.rebootWithBootReason(expectedBootReason=bootReasonExpected)
+            self.log.info(f"Reboot done with boot reason: {bootReasonExpected}")
             super().__init__(self.testName, "1", self.log) #Reinitialize after reboot
-            self.runTestCaseWithBootReason(bootReasonExpected)
+            test_result = self.runTestCaseWithBootReason(bootReasonExpected)
+            totatlResult = bool(boot_result) and bool(test_result)
+            self.log.info(f"Boot reason '{bootReasonExpected}' test completed.\n")
+        self.log.info("All boot reason test cases executed.")
+        return totatlResult
 
 if __name__ == '__main__':
-    summaryLogName = os.path.splitext(os.path.basename(__file__))[0] + "_summery"
+    summaryLogName = os.path.splitext(os.path.basename(__file__))[0] + "_summary"
     summaryLog  = logModule(summaryLogName, level=logModule.INFO)
     test = vts_boot_L3_VerifyBootReason(summaryLog )
     test.run(False)

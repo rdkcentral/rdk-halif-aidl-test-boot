@@ -29,8 +29,10 @@ deviceConfig:
         soc_vendor: "appleM3"
         target_directory: "/tmp/"
         boot_process_name: "Vendor-Boot"
+        boot_non_volatile_directory: "/tmp/"
+        boot_volatile_directory: "/home/root/"
         prompt: "~#" # Prompt string on console
-        wait_time: 20 #Configurable timeout value to limit the total duration of individual tests
+        wait_time: 40 #Configurable timeout value to limit the total duration of individual tests
         test:
             profile: "../../profiles/hfp-boot-vcomponent.yaml" #HFP profile used to meet platform requirements
             controller_port: 9081 #Port where the ut-controller is listening

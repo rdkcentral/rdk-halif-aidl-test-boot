@@ -27,16 +27,14 @@ import sys
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(dir_path, "../"))
 
-from raft.framework.plugins.ut_raft.configRead import ConfigRead
-from raft.framework.core.logModule import logModule
-from raft.framework.plugins.ut_raft import utHelperClass
-from raft.framework.plugins.ut_raft.utSuiteNavigator import UTSuiteNavigatorClass
-from raft.framework.plugins.ut_raft.utBaseUtils import utBaseUtils
 from vts_boot_helper import bootHelperClass
+from raft.framework.core.logModule import logModule
 
 BOOT_L1_TEST_SUITE_NAME = "VTS_L1_BOOT"
 BOOT_L2_TEST_SUITE_NAME = "VTS_L2_BOOT"
-BOOT_REASON_FILE_ON_DEVICE = "/var/boot_reason"
+BOOT_REASON_FILE_ON_DEVICE = "/var/boot_reason.txt"
+RESET_TYPE_FILE_ON_DEVICE = "/var/reset_type.txt"
+POWER_SOURCE_FILE_ON_DEVICE = "/var/power_source.txt"
 
 class  vts_boot_L1_L2_tests(bootHelperClass):
     """
@@ -78,13 +76,8 @@ class  vts_boot_L1_L2_tests(bootHelperClass):
         """
         self.utilities.change_directory(self.hal_session, self.targetWorkspace)
 
-        if self.platform.lower() == "vDevice".lower():
-            # Remove boot reason file if exists on vDevice platform
-            rmOutput = self.hal_session.write(f"rm {BOOT_REASON_FILE_ON_DEVICE}")
-            if rmOutput is True:
-                self.log.info(f"{BOOT_REASON_FILE_ON_DEVICE} file removed successfully")
-            else:
-                self.log.error(f"Unable to remove {BOOT_REASON_FILE_ON_DEVICE} file")
+        if self.platform == "vDevice":
+                self.removeFilesOnDevice([BOOT_REASON_FILE_ON_DEVICE, RESET_TYPE_FILE_ON_DEVICE, POWER_SOURCE_FILE_ON_DEVICE])
 
         self.utMenu.start()
 
@@ -113,7 +106,7 @@ class  vts_boot_L1_L2_tests(bootHelperClass):
         return finalresult
 
 if __name__ == '__main__':
-    summaryLogName = os.path.splitext(os.path.basename(__file__))[0] + "_summery"
+    summaryLogName = os.path.splitext(os.path.basename(__file__))[0] + "_summary"
     summaryLog = logModule(summaryLogName, level=logModule.INFO)
     test = vts_boot_L1_L2_tests(summaryLog)
     test.run(False)

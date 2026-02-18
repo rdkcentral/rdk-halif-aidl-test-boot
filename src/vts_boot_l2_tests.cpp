@@ -99,9 +99,8 @@ UT_ADD_TEST(VTS_L2_BOOT, setAndGetBootReason)
     android::sp<com::rdk::hal::boot::IBoot> bootHandle = gBOOTHandle;
     UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
     std::string result;
-    com::rdk::hal::boot::BootReason uBootReasonToSet;
 
-    UT_LOG_INFO("Enter boot reasons from below options:");
+    UT_LOG_INFO("Iterating over all available boot reasons:");
     for (const auto &bootReason : android::internal::enum_values<com::rdk::hal::boot::BootReason>)
     {
         UT_LOG_INFO(" %s : %d\n", com::rdk::hal::boot::toString(bootReason).c_str(), bootReason);

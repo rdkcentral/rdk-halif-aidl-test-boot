@@ -24,8 +24,9 @@
 import os
 import sys
 import tarfile
-import yaml
 import time
+import re
+from typing import Literal
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(dir_path, "../"))
@@ -44,12 +45,12 @@ BOOT_L3_TEST_CONFIG_FILE = os.path.join(os.path.join(dir_path, "../../test_confi
 
 class bootHelperClass(utHelperClass):
 
-    def __init__(self, testName:str, qcId:str, log:logModule=None ):
+    def __init__(self, testName:str, qcId:str, log:logModule=None):
         """
         Initializes the test class
         """
         self.moduleName = "Boot"
-        self.profile_moduleName = "IBoot"
+        self.profile_moduleName = "Boot"
         super().__init__(testName, qcId, log)
 
         self.log = log
@@ -61,16 +62,15 @@ class bootHelperClass(utHelperClass):
         self.deviceTestSetup = self.cpe.get("test")
         self.targetWorkspace = os.path.join(self.cpe.get("target_directory"), self.moduleName)
         self.moduleHFPFile = os.path.join(dir_path, self.deviceTestSetup.get("profile"))
+        self.nonvolatileDirectoryOnDevice = self.cpe.get("boot_non_volatile_directory")
+        self.volatileDirectoryOnDevice = self.cpe.get("boot_volatile_directory")
         profileOnTarget = os.path.join(self.targetWorkspace, "profiles")
         profileOnTarget = os.path.join(profileOnTarget, os.path.basename(self.moduleHFPFile))
         profileOnTarget = profileOnTarget.replace("\\", "/")
-
         platformConfigOnTarget = os.path.join(self.targetWorkspace, "test_configuration")
         platformConfigOnTarget = platformConfigOnTarget.replace("\\", "/")
-
         self.l3TestConfigFolder = os.path.join(self.targetWorkspace, "test_configuration")
         self.l3TestConfigFolder = self.l3TestConfigFolder.replace("\\", "/")
-
         self.waitTime = self.cpe.get("wait_time")
         self.device_type = self.cpe.get("device_type")
         self.platform = self.cpe.get("platform")
@@ -116,8 +116,8 @@ class bootHelperClass(utHelperClass):
         """
         super().testEndFunction(powerOff)
 
-    def waitForBoot(self):
-        return super().waitForBoot()
+    def pingTest(self, deviceName="dut", logPingTime=False):
+        return super().pingTest(deviceName, logPingTime)
     
     def triggerBoot(self, trigger: str) -> bool:
         """
@@ -129,34 +129,42 @@ class bootHelperClass(utHelperClass):
         Returns:
           bool: True if the message was sent successfully, False otherwise.
         """
-        yaml_content = ()
+        yaml_content = ""
         if trigger == "WATCHDOG":
             yaml_content = (
-                "Boot:\n"
-                "  command: \"WATCHDOG\"\n"
+                "boot:\n"
+                "  bootReason: \"WATCHDOG\"\n"
             )
-        elif trigger == "SOFTWARE_RESET":
+        elif trigger == "MAINTENANCE_REBOOT":
             yaml_content = (
-                "Boot:\n"
-                "  command: \"SOFTWARE_RESET\"\n"
+                "boot:\n"
+                "  bootReason: \"MAINTENANCE_REBOOT\"\n"
             )
         elif trigger == "THERMAL_RESET":
             yaml_content = (
-                "Boot:\n"
-                "  command: \"THERMAL_RESET\"\n"
+                "boot:\n"
+                "  bootReason: \"THERMAL_RESET\"\n"
+            )
+        elif trigger == "WARM_RESET":
+            yaml_content = (
+                "boot:\n"
+                "  bootReason: \"WARM_RESET\"\n"
             )
         elif trigger == "COLD_BOOT":
             yaml_content = (
-                "Boot:\n"
-                "  command: \"COLD_BOOT\"\n"
+                "boot:\n"
+                "  bootReason: \"COLD_BOOT\"\n"
             )
         elif trigger == "STR_AUTH_FAILURE":
             yaml_content = (
-                "Boot:\n"
-                "  command: \"STR_AUTH_FAILURE\"\n"
+                "boot:\n"
+                "  bootReason: \"STR_AUTH_FAILURE\"\n"
             )
         else:
-            print("Unknown trigger\n")
+            yaml_content = (
+                "boot:\n"
+                "  bootReason: \"ERROR_UNKNOWN\"\n"
+            )
 
         # Send the command to ut-controller
         self.controller.sendMessage(yaml_content)
@@ -177,7 +185,7 @@ class bootHelperClass(utHelperClass):
         self.utilities.change_directory(self.hal_session, self.targetWorkspace)
 
         # Trigger reboot with specified boot reason based on platform
-        if self.platform.lower() == "vDevice".lower():
+        if self.platform == "vDevice":
             self.deviceTestSetup = self.cpe.get("test")
             self.controller = utPlaneController(self.session, port=self.deviceTestSetup.get("controller_port"), log=self.log)
             self.port = self.deviceTestSetup.get("controller_port")
@@ -189,11 +197,12 @@ class bootHelperClass(utHelperClass):
         self.log.info(f"Waiting for {sleepTime} seconds to allow device to reboot...")
         time.sleep(sleepTime)  # Wait for the configured time to allow device to reboot
         self.hal_session.close()
-        result = self.waitForBoot()
+        result = self.pingTest(logPingTime=True)
         if not result:
             self.log.error(f"Device did not boot up successfully after {expectedBootReason} reboot.")
             return False
-        
+        return result
+
     def runTestCaseWithBootReason(self, expectedBootReason: str) -> bool:
         """
         Runs the test case.
@@ -203,16 +212,57 @@ class bootHelperClass(utHelperClass):
         """
         self.utilities.change_directory(self.hal_session, self.targetWorkspace)
         self.testcase = "checkBootReason"
-        self.profileConfiguration = ConfigRead(self.moduleHFPFile, self.profile_moduleName)
 
         self.utMenu.start()
 
         output =self.utMenu.select("VTS_L3_BOOT", self.testcase, None, self.waitTime, False)
         results = self.utMenu.collect_results(output, True)
         
-        # Validate Boot Reason WATCHDOG in results
+        # Validate Boot Reason in results
         bootReasonActual = output.strip()
         if expectedBootReason in bootReasonActual:
             self.log.info(f"Boot Reason '{expectedBootReason}' verified successfully after reboot.")
-
+            results = results and True
+        else:
+            self.log.error(f"Boot Reason verification failed. Expected: '{expectedBootReason}', Actual: '{bootReasonActual}'")
+            results = False
         self.log.stepResult(results, f'Test Suit: {"VTS_L3_BOOT"} Test Case: {self.testcase}')
+        return results
+
+    def removeFilesOnDevice(self, files: list):
+        """
+        Removes specified files from the device.
+
+        Args:
+            files (list): List of file paths to be removed from the device.
+        """
+        for file in files:
+            rmOutput = self.hal_session.write(f"rm {file}")
+            if rmOutput is True:
+                self.log.info(f"{file} removed successfully")
+            else:
+                self.log.error(f"Unable to remove {file}")
+
+    def parseFileCheckLog(self, log: str) -> bool:
+        """
+        Parse shell log output and determine file existence.
+        Returns:
+            bool:
+                True  -> file exists
+                False -> file does NOT exist
+        Assumes:
+            TRUE  means file exists
+            FALSE means file does not exist
+        """
+        if not log or not isinstance(log, str):
+            raise ValueError("Log must be a non-empty string.")
+
+        normalized = log.replace("\r\n", "\n").replace("\r", "\n")
+        matches = re.findall(r"^(TRUE|FALSE)$", normalized, re.MULTILINE)
+
+        if not matches:
+            self.log.error("No TRUE/FALSE result found in log.")
+            return False
+
+        last_result: Literal["TRUE", "FALSE"] = matches[-1]
+        return last_result == "TRUE"
