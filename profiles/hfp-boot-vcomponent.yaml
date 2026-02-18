@@ -42,3 +42,4 @@ boot:
     - PSU                     # External power supply unit
     - USB                     # USB-driven power source
     - POE                     # Power over Ethernet
+  powerSource : "UNKNOWN"

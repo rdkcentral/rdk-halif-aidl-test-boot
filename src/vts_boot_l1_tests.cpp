@@ -219,23 +219,12 @@ UT_ADD_TEST(VTS_L1_BOOT, getPowerSource_pos)
     BOOT_GETPOWERSOURCE_SUCCESS(bootHandle, powerSource);
 
     // Validate that the returned power source matches the supported power sources in profile
-    const std::string baseKey = "boot/supportedPowerSources";
-    bool powerSourceMatched = false;
-    for (int32_t i = 0; i < UT_KVP_PROFILE_GET_LIST_COUNT(baseKey.c_str()); i++)
+    const std::string baseKey = "boot/powerSource";
+    char value[UT_KVP_MAX_ELEMENT_SIZE] = {0};
+    if (ut_kvp_getStringField(ut_kvp_profile_getInstance(), baseKey.c_str(), value, sizeof(value)) == UT_KVP_STATUS_SUCCESS)
     {
-        char value[UT_KVP_MAX_ELEMENT_SIZE] = {0};
-        std::string key = baseKey + "/" + std::to_string(i);
-        if (ut_kvp_getStringField(ut_kvp_profile_getInstance(), key.c_str(), value, sizeof(value)) == UT_KVP_STATUS_SUCCESS)
-        {
-            if (strcmp(value, android::internal::ToString(powerSource).c_str()) == 0) // Validate that the power source string in profile matches with the power source string from getPowerSource()
-            {
-                UT_PASS("Power source from getPowerSource() is among supported power sources in profile");
-                powerSourceMatched = true;
-                break;
-            }
-        }
+        UT_ASSERT_STRING_EQUAL(toString(powerSource).c_str(),value);
     }
-    UT_ASSERT_TRUE(powerSourceMatched); // Validate that the returned power source matches the supported power sources in profile
 }
 
 

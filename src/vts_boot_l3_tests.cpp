@@ -94,7 +94,7 @@ public:
 };
 
 // Test case to validate reboot() method of boot interface
-UT_ADD_TEST(VTS_L3_BOOT, reboot_system)
+UT_ADD_TEST(VTS_L3_BOOT, rebootSystem)
 {
     android::sp<com::rdk::hal::boot::IBoot> bootHandle = gBOOTHandle;
     com::rdk::hal::boot::ResetType uResetType;
@@ -107,6 +107,16 @@ UT_ADD_TEST(VTS_L3_BOOT, reboot_system)
     }
     int resetTypeInt;
     std::cin >> resetTypeInt; // taking input for reset type
+
+    // Check if input was successful
+    if (std::cin.fail())
+    {
+        UT_LOG_ERROR("Invalid input: expected an integer\n");
+        std::cin.clear();                                                   // Clear error flags
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Discard invalid input
+        UT_ASSERT_TRUE(false);                                              // Fail the test
+        return;
+    }
     uResetType = static_cast<com::rdk::hal::boot::ResetType>(resetTypeInt);
     bool validResetType = false;
 
@@ -170,12 +180,47 @@ UT_ADD_TEST(VTS_L3_BOOT, overrideBootReason)
 {
     android::sp<com::rdk::hal::boot::IBoot> bootHandle = gBOOTHandle;
     UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
-    com::rdk::hal::boot::BootReason bootReasonToSet = com::rdk::hal::boot::BootReason::MAINTENANCE_REBOOT;
-    std::string reasonString = "Test boot reason from overrideBootReason test case";
-    BOOT_SETBOOTREASON_SUCCESS(bootHandle, bootReasonToSet, reasonString);
+    // Set boot reason from user input
+    UT_LOG_INFO("Enter boot reason to set from below options:");
+    for(const auto &bootReason : android::internal::enum_values<com::rdk::hal::boot::BootReason>)
+    {
+        UT_LOG_INFO(" %s : %d\n", com::rdk::hal::boot::toString(bootReason).c_str(), bootReason);
+    }
+    int bootReasonInt;
+    std::cin >> bootReasonInt; // taking input for boot reason
 
-    UT_LOG_INFO("Boot reason set using setBootReason: %s", com::rdk::hal::boot::toString(bootReasonToSet).c_str());
-    UT_LOG_INFO("Now reboot the system to check if override works as expected, select test 1 : reboot_system\n");
+    // Check if input was successful
+    if (std::cin.fail())
+    {
+        UT_LOG_ERROR("Invalid input: expected an integer\n");
+        std::cin.clear();                                                   // Clear error flags
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Discard invalid input
+        UT_ASSERT_TRUE(false);                                              // Fail the test
+        return;
+    }
+
+    com::rdk::hal::boot::BootReason uBootReason = static_cast<com::rdk::hal::boot::BootReason>(bootReasonInt);
+    bool validBootReason = false;
+    for(const auto &bootReason : android::internal::enum_values<com::rdk::hal::boot::BootReason>)
+    {
+        if(bootReason == uBootReason)
+        {
+            UT_LOG_INFO("Selected boot reason: %s\n", com::rdk::hal::boot::toString(uBootReason).c_str());
+            validBootReason = true;
+            break;
+        }
+    }
+    UT_ASSERT_TRUE(validBootReason); // Validate that the input boot reason is valid
+    if (!validBootReason)
+    {
+        UT_LOG_ERROR("Invalid boot reason selected: %s\n", com::rdk::hal::boot::toString(uBootReason).c_str());
+        return; // Exit test if invalid boot reason is selected
+    }
+    std::string reasonString = com::rdk::hal::boot::toString(uBootReason);
+    BOOT_SETBOOTREASON_SUCCESS(bootHandle, uBootReason, reasonString);
+
+    UT_LOG_INFO("Boot reason set using setBootReason: %s", com::rdk::hal::boot::toString(uBootReason).c_str());
+    UT_LOG_INFO("Now reboot the system to check if override works as expected, select test 1 : rebootSystem\n");
 }
 
 /**
