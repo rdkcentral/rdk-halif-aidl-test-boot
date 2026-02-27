@@ -258,7 +258,9 @@ The Boot L3 tests use the UT-Controller to simulate boot scenarios on vDevice. T
 **UT-Controller Message Format:**
 ```yaml
 boot:
-  bootReason: "<BOOT_REASON>"
+  command: bootReason
+  params:
+    reason: "<BOOT_REASON>"
 ```
 
 **Supported Boot Reasons:**

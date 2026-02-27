@@ -95,6 +95,8 @@ class  vts_boot_L1_L2_tests(bootHelperClass):
                 self.log.stepStart(f'Test Suite: {testsuite_name} Run all Tests cases')
                 # If 'all' test case mentioned in list, run all tests with 'r' option
                 result = self.runTest(testsuite)
+                if not result:
+                    finalresult = False
                 self.log.stepResult(result, f'Test Suite: {testsuite_name} Run all Tests cases')
             else:
                 for test_case in testsuite.get("test_cases"):

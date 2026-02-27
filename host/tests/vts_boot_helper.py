@@ -133,37 +133,51 @@ class bootHelperClass(utHelperClass):
         if trigger == "WATCHDOG":
             yaml_content = (
                 "boot:\n"
-                "  bootReason: \"WATCHDOG\"\n"
+                "  command: bootReason\n"
+                "  params:\n"
+                "    reason: \"WATCHDOG\"\n"
             )
         elif trigger == "MAINTENANCE_REBOOT":
             yaml_content = (
                 "boot:\n"
-                "  bootReason: \"MAINTENANCE_REBOOT\"\n"
+                "  command: bootReason\n"
+                "  params:\n"
+                "    reason: \"MAINTENANCE_REBOOT\"\n"
             )
         elif trigger == "THERMAL_RESET":
             yaml_content = (
                 "boot:\n"
-                "  bootReason: \"THERMAL_RESET\"\n"
+                "  command: bootReason\n"
+                "  params:\n"
+                "    reason: \"THERMAL_RESET\"\n"
             )
         elif trigger == "WARM_RESET":
             yaml_content = (
                 "boot:\n"
-                "  bootReason: \"WARM_RESET\"\n"
+                "  command: bootReason\n"
+                "  params:\n"
+                "    reason: \"WARM_RESET\"\n"
             )
         elif trigger == "COLD_BOOT":
             yaml_content = (
                 "boot:\n"
-                "  bootReason: \"COLD_BOOT\"\n"
+                "  command: bootReason\n"
+                "  params:\n"
+                "    reason: \"COLD_BOOT\"\n"
             )
         elif trigger == "STR_AUTH_FAILURE":
             yaml_content = (
                 "boot:\n"
-                "  bootReason: \"STR_AUTH_FAILURE\"\n"
+                "  command: bootReason\n"
+                "  params:\n"
+                "    reason: \"STR_AUTH_FAILURE\"\n"
             )
         else:
             yaml_content = (
                 "boot:\n"
-                "  bootReason: \"ERROR_UNKNOWN\"\n"
+                "  command: bootReason\n"
+                "  params:\n"
+                "    reason: \"ERROR_UNKNOWN\"\n"
             )
 
         # Send the command to ut-controller

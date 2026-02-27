@@ -60,10 +60,7 @@ class  vts_boot_L3_VerifyReboot(bootHelperClass):
 
     def testFunction(self):
         """
-        The main test function to run the L3 Boot reboot with reset type = MAINTENANCE_REBOOT and SOFTWARE_REBOOT.
-
-        Returns:
-            bool: Final result of the test.
+        Tests different reboot types and verifies boot reason and file persistence based on reset type
         """
         self.utilities.change_directory(self.hal_session, self.targetWorkspace)
         results = True

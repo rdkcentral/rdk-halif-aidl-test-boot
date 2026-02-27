@@ -58,7 +58,7 @@ class  vts_boot_L3_VerifyBootReason(bootHelperClass):
             self.log.info(f"Reboot done with boot reason: {bootReasonExpected}")
             super().__init__(self.testName, "1", self.log) #Reinitialize after reboot
             test_result = self.runTestCaseWithBootReason(bootReasonExpected)
-            totatlResult = bool(boot_result) and bool(test_result)
+            totatlResult = totatlResult and bool(boot_result) and bool(test_result)
             self.log.info(f"Boot reason '{bootReasonExpected}' test completed.\n")
         self.log.info("All boot reason test cases executed.")
         return totatlResult

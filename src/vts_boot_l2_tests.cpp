@@ -93,7 +93,32 @@ public:
     }
 };
 
-// Test case to validate set and get boot reason for user provided boot reason and check if the set reason matches the returned reason
+/**
+ * @brief Validate setBootReason() and getBootReason() functionality for all supported boot reasons.
+ *
+ * This test verifies the correct operation of setBootReason() and getBootReason() methods
+ * by iterating through all available boot reason enum values. It sets each boot reason
+ * and immediately retrieves it to ensure the value persists correctly and matches the
+ * originally set value. This validates the complete round-trip behavior of boot reason
+ * storage and retrieval.
+ *
+ * **Test Group ID:** Basic: 02@n
+ * **Test Case ID:** 001@n
+ * **Priority:** High@n
+ *
+ * **Pre-Conditions:**@n
+ * - Boot interface must be initialized and available@n
+ * - Boot service must be running@n
+ *
+ * **Dependencies:**
+ * - A valid gBOOTHandle must be available
+ *
+ * **User Interaction:** None@n
+ *
+ * **Test Procedure:**@n
+ * Refer to UT specification documentation [Boot_L2_Low-Level_TestSpecification.md](../docs/pages/Boot_L2_Low-Level_TestSpecification.md)
+ *
+ */
 UT_ADD_TEST(VTS_L2_BOOT, setAndGetBootReason)
 {
     android::sp<com::rdk::hal::boot::IBoot> bootHandle = gBOOTHandle;
@@ -103,8 +128,8 @@ UT_ADD_TEST(VTS_L2_BOOT, setAndGetBootReason)
     UT_LOG_INFO("Iterating over all available boot reasons:");
     for (const auto &bootReason : android::internal::enum_values<com::rdk::hal::boot::BootReason>)
     {
-        UT_LOG_INFO(" %s : %d\n", com::rdk::hal::boot::toString(bootReason).c_str(), bootReason);
         std::string reasonString = com::rdk::hal::boot::toString(bootReason);
+        UT_LOG_INFO(" %s : %d\n", reasonString.c_str(), bootReason);
 
         BOOT_SETBOOTREASON_SUCCESS(bootHandle, bootReason, reasonString);
         sleep(1); // Sleep for a short duration to ensure the boot reason is set before we attempt to get it back
