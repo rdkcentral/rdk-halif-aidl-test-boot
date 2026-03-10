@@ -32,6 +32,7 @@ from typing import Literal
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(dir_path, "../"))
 sys.path.append(os.path.join(dir_path, "../dutReboot"))
+sys.path.append(os.path.join(dir_path, "../dutReboot"))
 
 from raft.framework.plugins.ut_raft.configRead import ConfigRead
 from raft.framework.plugins.ut_raft import utHelperClass
@@ -39,6 +40,7 @@ from raft.framework.core.logModule import logModule
 from raft.framework.plugins.ut_raft.utSuiteNavigator import UTSuiteNavigatorClass
 from raft.framework.plugins.ut_raft.utBaseUtils import utBaseUtils
 from raft.framework.plugins.ut_raft.utUserResponse import utUserResponse
+from dutRebootController import DutRebootController
 from dutRebootController import DutRebootController
 
 BOOT_TEST_MENU_CONFIGURATION_FILE = os.path.join(dir_path, "vts_boot_testMenuConfiguration.yaml")
@@ -119,6 +121,15 @@ class bootHelperClass(utHelperClass):
             control_port=control_port if control_port else 8080
         )
 
+        # Initialize DUT Reboot Controller
+        control_port = self.dut.getField("control_port") if self.platform == "vDevice" else None
+        self.dutRebootController = DutRebootController(
+            log=self.log,
+            platform=self.platform,
+            session=self.session if self.platform == "vDevice" else None,
+            control_port=control_port if control_port else 8080
+        )
+
     def testEndFunction(self, powerOff=True):
         """
         Ends the test case.
@@ -130,33 +141,24 @@ class bootHelperClass(utHelperClass):
     def pingTest(self, deviceName="dut", logPingTime=False):
         return super().pingTest(deviceName, logPingTime)
     
-    def triggerBoot(self, trigger: str) -> bool:
+    def externallyTriggeredReboot(self, expectedBootReason: str) -> bool:
         """
-        This function sends a specified boot reason for booting up the device.
-        Now uses the pluggable dutRebootController.
+        Simulates an externally triggered reboot (e.g. watchdog, thermal reset) by sending
+        a boot reason command via the Control Plane. Verifies the device comes back up successfully.
 
         Args:
-          trigger (str): boot reason to be sent for booting up the device
+          expectedBootReason (str): The boot reason to trigger the reboot with.
 
         Returns:
-          bool: True if the message was sent successfully, False otherwise.
-        """
-        return self.dutRebootController.triggerReboot(trigger)
-
-    def rebootWithBootReason(self, expectedBootReason: str) -> bool:
-        """
-        This function triggers reboot with specified boot reason and verifies device comes back up.
-        Now uses the pluggable dutRebootController.
-
-        Args:
-          expectedBootReason (str): The expected boot reason to verify against.
-
-        Returns:
-          bool: True if the boot reason matches the expected value, False otherwise.
+          bool: True if the device rebooted and came back up successfully, False otherwise.
         """
         self.hal_session = self.dut.getConsoleSession("default")
         self.utilities.change_directory(self.hal_session, self.targetWorkspace)
 
+        # Trigger reboot with specified boot reason using the controller
+        if not self.dutRebootController.triggerReboot(expectedBootReason):
+            self.log.error(f"Failed to trigger reboot with boot reason: {expectedBootReason}")
+            return False
         # Trigger reboot with specified boot reason using the controller
         if not self.dutRebootController.triggerReboot(expectedBootReason):
             self.log.error(f"Failed to trigger reboot with boot reason: {expectedBootReason}")
@@ -209,8 +211,52 @@ class bootHelperClass(utHelperClass):
         
         return True
 
+    def performAndVerifyReboot(self, suite_name: str, reset_index: int, reset_type: str) -> bool:
+        """
+        Performs reboot using UT menu and verifies device boots successfully.
+        
+        Args:
+            suite_name: The UT test suite name
+            reset_index: The index of reset type in the UT menu
+            reset_type: The reset type name for logging
+        
+        Returns:
+            bool: True if reboot and device boot verification succeeded, False otherwise
+        """
+        testcase = "rebootSystem"
+        self.utMenu.start()
+        promptWithAnswers = [
+            {    
+                "query_type": "direct",
+                "query": "Enter reset types from below options:",
+                "input": str(reset_index)
+            }    
+        ]
+
+        menuOutput = self.utMenu.select(suite_name, testcase, promptWithAnswers, self.waitTime, False)
+        self.log.info(menuOutput)
+        sleepTime = self.cpe.get("wait_time")
+        self.log.info(f"Waiting for {sleepTime} seconds to allow device to reboot...")
+        time.sleep(sleepTime)
+        self.hal_session.close()
+        
+        # Verify device booted successfully
+        result = self.pingTest(logPingTime=True)
+        if not result:
+            self.log.error(f"Device did not boot up successfully after {reset_type} reboot.")
+            return False
+        
+        return True
+
     def verifyBootReason(self, reset_type: str, expectedBootReason: str, test_id: str = None) -> bool:
         """
+        Checks boot reason using UT menu and verifies it matches the expected boot reason.
+        
+        Args:
+            reset_type: The type of reset that was performed (for logging)
+            expectedBootReason: The expected boot reason to verify against
+            test_id: Optional test ID for more specific logging
+        
         Checks boot reason using UT menu and verifies it matches the expected boot reason.
         
         Args:
@@ -233,18 +279,43 @@ class bootHelperClass(utHelperClass):
         self.utilities.change_directory(self.hal_session, self.targetWorkspace)
         self.testcase = "checkBootReason"
         self.hal_session = self.dut.getConsoleSession("default")
+        self.hal_session = self.dut.getConsoleSession("default")
         self.utMenu.start()
 
         result = self.utMenu.select("VTS_L3_BOOT", self.testcase, None, self.waitTime, False)
-
-        results = self.utMenu.collect_results(result, True)
-        context = f"test {test_id}" if test_id else f"{reset_type} reboot"
-        if not results:
-            self.log.stepResult(False, f"Failed ❌ to verify boot reason '{expectedBootReason}' after {context}.")
+        
+        # Try multiple regex patterns to extract boot reason
+        patterns = [
+            r"Result getBootReason\(OUT:bootReason\), status:\[.*?bootReason:(?P<bootReason>\w+)\]",
+            r"bootReason:(?P<bootReason>[A-Z_]+)"
+        ]
+        
+        bootReason = None
+        for pattern in patterns:
+            match = re.search(pattern, result)
+            if match:
+                bootReason = match.group("bootReason")
+                break
+        
+        if not bootReason:
+            context = f"test {test_id}" if test_id else f"{reset_type} reboot"
+            self.log.error(f"Failed to parse boot reason from UT menu output after {context}.")
             return False
 
-        self.log.stepResult(True, f"Boot reason '{expectedBootReason}' verified successfully after {context}. PASSED ✅.")
-        return True
+        results = self.utMenu.collect_results(result, True)
+        if not results:
+            context = f"test {test_id}" if test_id else f"{reset_type} reboot"
+            self.log.error(f"Failed to verify boot reason after {context}.")
+            return False
+        
+        # Verify boot reason matches expected
+        test_case = test_id if test_id else f"{reset_type}_{expectedBootReason}"
+        if bootReason == expectedBootReason:
+            self.log.stepResult(True, f"Test Suit: {self.testName} Test Case: {test_case}")
+            return True
+        else:
+            self.log.stepResult(False, f"Test Suit: {self.testName} Test Case: {test_case}")
+            return False
 
     def overrideBootReason(self, suite_name: str, boot_reason_index: int, boot_reason: str) -> bool:
         """

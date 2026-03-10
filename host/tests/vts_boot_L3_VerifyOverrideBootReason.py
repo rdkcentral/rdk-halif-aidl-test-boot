@@ -91,12 +91,12 @@ class vts_boot_L3_VerifyOverrideBootReason(bootHelperClass):
         
         # Step 1: Set boot reason override
         if not self.overrideBootReason(BOOT_L3_TEST_SUITE_NAME, bootReasonIndex, boot_reason):
-            self.log.stepResult(False, f"Test {test_id} FAILED: Could not set override")
+            self.log.stepResult(False, f"Test Suit: {self.testName} Test Case: {test_id}")
             return False
         
         # Step 2: Reboot with specified reset type
         if not self.performAndVerifyReboot(BOOT_L3_TEST_SUITE_NAME, resetTypeIndex, reset_type):
-            self.log.stepResult(False, f"Test {test_id} FAILED: Device did not boot")
+            self.log.stepResult(False, f"Test Suit: {self.testName} Test Case: {test_id}")
             return False
         
         # Reinitialize after reboot

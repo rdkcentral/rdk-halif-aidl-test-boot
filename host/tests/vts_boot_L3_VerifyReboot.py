@@ -115,17 +115,17 @@ class  vts_boot_L3_VerifyReboot(bootHelperClass):
 
                 if file_should_persist and file_exists:
                     results = results and True
-                    self.log.stepResult(results, f"File still exists after {reset_type} reboot as expected. PASSED ✅.")
+                    self.log.stepResult(results, f"Test Suit: {self.testName} Test Case: {reset_type}")
                 elif not file_should_persist and not file_exists:
                     results = results and True
-                    self.log.stepResult(results, f"File is deleted after {reset_type} reboot as expected. PASSED ✅.")
+                    self.log.stepResult(results, f"Test Suit: {self.testName} Test Case: {reset_type}")
                 elif file_should_persist and not file_exists:
                     results = False
-                    self.log.stepResult(results, f"File was deleted after {reset_type} reboot unexpectedly. FAILED ❌.")
+                    self.log.stepResult(results, f"Test Suit: {self.testName} Test Case: {reset_type}")
                     continue
                 else:  # not file_should_persist and file_exists
                     results = False
-                    self.log.stepResult(results, f"File still exists after {reset_type} reboot unexpectedly. FAILED ❌.")
+                    self.log.stepResult(results, f"Test Suit: {self.testName} Test Case: {reset_type}")
                     continue
 
                 # Clean up the file if it still exists
@@ -133,7 +133,7 @@ class  vts_boot_L3_VerifyReboot(bootHelperClass):
                     self.hal_session.write(f"rm {file_directory}{L3_TEST_CONFIG_FILE_NAME}")
             else:
                 # For other reset types, just log success
-                self.log.stepResult(results, f"Device rebooted successfully with {reset_type}. Test Passed.")
+                self.log.stepResult(results, f"Test Suit: {self.testName} Test Case: {reset_type}")
         return results
 
 if __name__ == '__main__':
