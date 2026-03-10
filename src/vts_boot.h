@@ -71,6 +71,8 @@
 #include "com/rdk/hal/boot/IBoot.h"
 #include <iostream>
 
+#define BOOT_L3_TEST_CONFIG_FILE "test_configuration/vts_l3_boot.yaml"
+
 // Macro for getCapabilities - positive case
 #define BOOT_GETCAPABILITIES_SUCCESS(bootHandle, capabilities)                 \
     do{                                                                           \
@@ -157,6 +159,32 @@
         UT_LOG_DEBUG("Result setBootReason(OUT:), status:[isOK:%s, exception:%d]", status.isOk() ? "true" : "false", status.exceptionCode()); \
         UT_ASSERT_FALSE(status.isOk()); \
         UT_ASSERT_EQUAL(status.exceptionCode(), expectedException); \
+    }while (0)
+
+// Macro to create a kvp instance from a file
+#define BOOT_KVP_CREATE_INSTANCE(instance, fileName)                              \
+    do{                                                                            \
+        ut_kvp_status_t result;                                                    \
+        instance = ut_kvp_createInstance();                                        \
+        if (!instance)                                                             \
+        {                                                                          \
+            UT_LOG_ERROR("[BOOT]Failed to create ut kvp instance");                \
+            break;                                                                 \
+        }                                                                          \
+        result = ut_kvp_open(instance, const_cast<char*>(fileName));               \
+        if (result != UT_KVP_STATUS_SUCCESS)                                       \
+        {                                                                          \
+            UT_LOG_ERROR("[BOOT]Failed to open test configuration file");          \
+            ut_kvp_destroyInstance(instance);                                      \
+            instance = nullptr;                                                    \
+            break;                                                                 \
+        }                                                                          \
+    }while (0)
+
+// Macro to destroy a kvp instance
+#define BOOT_KVP_DESTROY_INSTANCE(instance)                                       \
+    do{                                                                            \
+        ut_kvp_destroyInstance((ut_kvp_instance_t*)instance);                      \
     }while (0)
 
 /**

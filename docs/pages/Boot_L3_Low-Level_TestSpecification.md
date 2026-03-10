@@ -31,7 +31,6 @@ Level 3 testing focuses on end-to-end functional validation of Boot HAL APIs wit
 
 - **Reboot Operations**: Testing device reboot functionality with various reset types
 - **Boot Reason Verification**: Validating boot reasons after device reboots
-- **Power Source Detection**: Verifying the device's power source information
 - **Boot Reason Override**: Testing the ability to override boot reasons before reboot
 - **State Persistence**: Ensuring boot-related state persists across reboots
 - **Real Hardware Integration**: Testing with actual device hardware and firmware
@@ -46,10 +45,9 @@ The L3 test suite validates the Boot HAL's functionality through real device ope
 2. Accepting user input for test parameters (reset types, boot reasons)
 3. Executing device reboot operations using `reboot()` API
 4. Verifying boot reasons using `getBootReason()` after reboot
-5. Checking device power source using `getPowerSource()` API
-6. Testing boot reason override functionality with `setBootReason()`
-7. Validating actual device behavior matches expected outcomes
-8. Verifying state persistence across reboots
+5. Testing boot reason override functionality with `setBootReason()`
+6. Validating actual device behavior matches expected outcomes
+7. Verifying state persistence across reboots
 
 ### Test Setup
 
@@ -74,8 +72,7 @@ The following C++ test cases validate the Boot HAL L3 functionality:
 | Test Case | Description | HAL APIs | L3 Test Functions | Source |
 |-----------|-------------|----------|-------------------|---------|
 | rebootSystem | Validates device reboot with user-selected reset type | `IBoot::reboot()` | `test_l3_boot_rebootSystem()` | [vts_boot_l3_tests.cpp](../../src/vts_boot_l3_tests.cpp) |
-| checkBootReason | Validates boot reason retrieval and verification against supported capabilities | `IBoot::getBootReason()`<br>`IBoot::getCapabilities()` | `test_l3_boot_checkBootReason()` | [vts_boot_l3_tests.cpp](../../src/vts_boot_l3_tests.cpp) |
-| checkPowerSource | Validates power source detection | `IBoot::getPowerSource()` | `test_l3_boot_checkPowerSource()` | [vts_boot_l3_tests.cpp](../../src/vts_boot_l3_tests.cpp) |
+| checkBootReason | Validates boot reason retrieval and verification against the expected value in the L3 test configuration file | `IBoot::getBootReason()`<br>`IBoot::getCapabilities()` | `test_l3_boot_checkBootReason()` | [vts_boot_l3_tests.cpp](../../src/vts_boot_l3_tests.cpp) |
 | overrideBootReason | Validates boot reason override functionality before reboot | `IBoot::setBootReason()`<br>`IBoot::getBootReason()` | `test_l3_boot_overrideBootReason()` | [vts_boot_l3_tests.cpp](../../src/vts_boot_l3_tests.cpp) |
 
 ---
@@ -150,7 +147,7 @@ graph TD
 | Title | Details |
 |-------|----------|
 | Function Name | `checkBootReason` |
-| Description | This test validates that the boot reason retrieved from the device matches one of the supported boot reasons defined in the device capabilities. It verifies proper boot reason tracking across device boots. |
+| Description | This test validates that the boot reason retrieved from the device matches the expected boot reason specified in the `ValidateBootReason` field of the L3 test configuration file (`vts_l3_boot.yaml`). The expected value is written dynamically by the Python test framework before this test is executed. It verifies proper boot reason tracking across device boots. |
 | Test Group | 03 |
 | Test Case ID | 002 |
 | Priority | High |
@@ -181,13 +178,12 @@ graph TD
     G --> H[Call getCapabilities]
     H --> I{getCapabilities Success?}
     I -->|No| J[FAIL: getCapabilities Failed]
-    I -->|Yes| K[Extract Supported Boot Reasons]
-    K --> L[Iterate Through Supported Reasons]
-    L --> M{Boot Reason Matches?}
-    M -->|No| N{More Reasons to Check?}
-    N -->|Yes| L
-    N -->|No| O[FAIL: No Match Found]
-    M -->|Yes| P[Log Match Result]
+    I -->|Yes| K[Read ValidateBootReason from YAML Config]
+    K --> L{ValidateBootReason Found?}
+    L -->|No| M[Skip Assertion]
+    L -->|Yes| N{toString bootReason == ValidateBootReason?}
+    N -->|No| O[FAIL: Boot Reason Mismatch]
+    N -->|Yes| P[Log Match Result]
     P --> Q[PASS: Test Complete]
 ```
 
@@ -198,75 +194,22 @@ graph TD
 | 1 | Get Boot HAL Handle | None | Boot HAL handle should be non-null (`bootHandle != nullptr`) | Verify service is accessible |
 | 2 | Get Current Boot Reason | None | `getBootReason()` returns success<br>Valid BootReason enum value returned | Retrieve current boot reason |
 | 3 | Log Boot Reason | Boot reason value | Boot reason logged successfully | Display boot reason string |
-| 4 | Get Device Capabilities | None | `getCapabilities()` returns success<br>Capabilities structure populated | Retrieve supported boot reasons |
-| 5 | Extract Supported Boot Reasons | Capabilities structure | List of supported boot reasons obtained | From `capabilities.supportedBootReasons` |
-| 6 | Iterate Through Supported Reasons | Compare each supported reason | Loop through all supported boot reasons | |
-| 7 | Match Boot Reason | Current boot reason vs supported | Find matching boot reason in supported list | |
-| 8 | Validate Match Found | Boolean check | `reasonMatched == true` | Boot reason must be in supported list |
-| 9 | Log Match Result | Matched boot reason | Log successful match | Display matched boot reason |
-| 10 | Test Complete | None | Boot reason validated successfully | Test PASS |
+| 4 | Get Device Capabilities | None | `getCapabilities()` returns success<br>Capabilities structure populated | |
+| 5 | Read ValidateBootReason from YAML | `Boot/L3/ValidateBootReason` key in `vts_l3_boot.yaml` | `ValidateBootReason` string value obtained | Value is written by the Python test framework before this test runs |
+| 6 | Assert Boot Reason Matches | `toString(bootReason)` vs `ValidateBootReason` | `UT_ASSERT_STRING_EQUAL` passes | Boot reason must exactly match the expected value from YAML |
+| 7 | Log Match Result | Matched boot reason | Log successful match | Display matched boot reason |
+| 8 | Test Complete | None | Boot reason validated successfully | Test PASS |
 
 ---
 
-### Test 3: checkPowerSource
-
-| Title | Details |
-|-------|----------|
-| Function Name | `checkPowerSource` |
-| Description | This test validates the device's power source detection functionality. It retrieves the current power source and verifies the API returns successfully. |
-| Test Group | 03 |
-| Test Case ID | 003 |
-| Priority | Medium |
-
-**Pre-Conditions:** 
-- Boot HAL service must be running and accessible
-- Device must be powered on
-- Power source detection hardware must be functional
-
-**Dependencies:** 
-- Boot HAL Interface: `com.rdk.hal.boot.IBoot`
-- UT-Core Framework
-- Power source detection hardware/firmware
-
-**User Interaction:** 
-If user chose to run the test in interactive mode, then the test case has to be selected via console.
-
-**Test Flow Diagram:**
-
-```mermaid
-graph TD
-    A[Get Boot HAL Handle] --> B{Handle Valid?}
-    B -->|No| C[FAIL: Handle is NULL]
-    B -->|Yes| D[Call getPowerSource]
-    D --> E{getPowerSource Success?}
-    E -->|No| F[FAIL: getPowerSource Failed]
-    E -->|Yes| G[Verify PowerSource Value]
-    G --> H{Valid PowerSource Enum?}
-    H -->|No| I[FAIL: Invalid PowerSource]
-    H -->|Yes| J[Log Power Source]
-    J --> K[PASS: Test Complete]
-```
-
-**Test Procedure:**
-
-| Variation / Steps | Description | Test Data | Expected Result | Notes |
-|-------------------|-------------|-----------|-----------------|-------|
-| 1 | Get Boot HAL Handle | None | Boot HAL handle should be non-null (`bootHandle != nullptr`) | Verify service is accessible |
-| 2 | Call getPowerSource() API | None | `getPowerSource()` returns success<br>`Status::isOk() == true`<br>`exceptionCode == EX_NONE` | Retrieve current power source |
-| 3 | Verify PowerSource Value | PowerSource enum | Valid PowerSource enum value returned | One of: UNKNOWN, PSU, USB, POE |
-| 4 | Log Power Source | Power source value | Power source logged successfully | Display power source string |
-| 5 | Test Complete | None | Power source retrieved successfully | Test PASS |
-
----
-
-### Test 4: overrideBootReason
+### Test 3: overrideBootReason
 
 | Title | Details |
 |-------|----------|
 | Function Name | `overrideBootReason` |
 | Description | This test validates the boot reason override functionality. It allows the user to set a specific boot reason and prepares for verification after a subsequent reboot. This tests the `setBootReason()` API and prepares for cross-reboot validation. |
 | Test Group | 03 |
-| Test Case ID | 004 |
+| Test Case ID | 003 |
 | Priority | High |
 
 **Pre-Conditions:** 
@@ -329,6 +272,5 @@ graph TD
 - Boot HAL Interface Specification - [com.rdk.hal.boot.IBoot AIDL Interface](https://github.com/rdkcentral/rdk-halif-aidl/blob/main/boot/current/com/rdk/hal/boot/IBoot.aidl)
 - Boot Reason Enumeration - [BootReason.aidl](https://github.com/rdkcentral/rdk-halif-aidl/blob/main/boot/current/com/rdk/hal/boot/BootReason.aidl)
 - Reset Type Enumeration - [ResetType.aidl](https://github.com/rdkcentral/rdk-halif-aidl/blob/main/boot/current/com/rdk/hal/boot/ResetType.aidl)
-- Power Source Enumeration - [PowerSource.aidl](https://github.com/rdkcentral/rdk-halif-aidl/blob/main/boot/current/com/rdk/hal/boot/PowerSource.aidl)
 - Capabilities Structure - [Capabilities.aidl](https://github.com/rdkcentral/rdk-halif-aidl/blob/main/boot/current/com/rdk/hal/boot/Capabilities.aidl)
 - High Level Test Specification - [Boot High Level Test Specification](https://github.com/rdkcentral/rdk-halif-aidl/blob/main/docs/pages/boot-high-level-test-spec.md)

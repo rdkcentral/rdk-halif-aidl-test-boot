@@ -6,6 +6,7 @@
 - [Run L1 L2 Tests Without Python](#run-l1-l2-test-without-python)
 - [Run Tests in Python Environment](#run-tests-in-python-environment)
   - [Update Configuration Files](#update-configuration-files)
+  - [DUT Reboot Module](#dut-reboot-module)
   - [Install the Python Packages](#install-the-python-packages)
   - [Run the Tests](#run-test-cases)
 - [Notes](#note)
@@ -182,6 +183,14 @@ rackConfig:
                         upload_url_base_dir: "sftp://server-address/home/workspace/tftp/rack1/slot1" # alternative upload location
                         httpProxy:    # Local Proxy if required
                         workspaceDirectory: './logs/workspace'   # Local working directory
+                    dutRebootController:
+                        type: virtual-dut-reboot-controller
+                        vendor: "vComponent"
+                        address: "xx.0.0.1" # Needs to be be filled out with IP address
+                        username: "" # Needs to be filled out with login username
+                        password: '' # Needs to be filled out with login password
+                        port: xxx
+                        control_port: xxxx
 ```
 
 #### Device Configuration File
@@ -206,8 +215,42 @@ deviceConfig:
         wait_time: 40 # Configurable timeout value to limit the total duration of individual tests
         test:
             profile: "../../profiles/hfp-boot-vcomponent.yaml" #HFP profile used to meet platform requirements
-            controller_port: 9081 #Port where the ut-controller is listening
 ```
+
+### DUT Reboot Module
+
+The [host/dutReboot/](../../host/dutReboot/) module provides a pluggable, platform-aware mechanism for triggering device reboots with a specified boot reason. It abstracts the reboot mechanism so the same test code runs unchanged on both virtual and physical devices.
+
+#### How It Works
+
+The `bootHelperClass` constructs a `DutRebootController` during initialization:
+
+```python
+self.dutRebootController = DutRebootController(
+    log=self.log,
+    platform=self.platform,        # "vDevice" or real device platform string
+    session=self.session,          # SSH session (vDevice only)
+    control_port=control_port      # ut-controller port (default: 8080)
+)
+```
+
+At test runtime, `triggerReboot(boot_reason)` is called:
+
+| Platform | Behaviour |
+|----------|-----------|
+| `vDevice` | Sends a YAML message to the ut-controller, which forwards the boot reason to the running `Vendor-Boot` process |
+| Real device | Prompts the user in the console to manually trigger a reboot with the specified boot reason |
+
+The YAML message format used for vDevice:
+
+```yaml
+boot:
+  command: bootReason
+  params:
+    reason: "<BOOT_REASON>"
+```
+
+---
 
 ### Install the Python Packages
 
@@ -273,10 +316,16 @@ boot:
 - `ERROR_UNKNOWN` - Unknown or undetermined boot reason
 
 **Configuration:**
-The UT-Controller port is specified in the device configuration file:
+The UT-Controller port is specified in the rack configuration file:
 ```yaml
-test:
-  controller_port: 9081  # Port where ut-controller is listening
+dutRebootController:
+                        type: virtual-dut-reboot-controller
+                        vendor: "vComponent"
+                        address: "xx.0.0.1" # Needs to be be filled out with IP address
+                        username: "" # Needs to be filled out with login username
+                        password: '' # Needs to be filled out with login password
+                        port: xxx
+                        control_port: xxx
 ```
 
 **Process Flow for vDevice Testing:**
@@ -310,12 +359,12 @@ python <testcase>.py --config </PATH>/host/tests/configs/vts_rack_configuration.
 
 **Test Configuration File** [vts_l3_boot.yaml](../../test_configuration/vts_l3_boot.yaml)
 
-#### Verify Boot Reason — `vts_boot_L3_VerifyBootReason.py`
+#### Verify Boot Reason External Cause — `vts_boot_L3_VerifyBootReasonExternalCause.py`
 
-**Path:** [vts_boot_L3_VerifyBootReason.py](../../host/tests/vts_boot_L3_VerifyBootReason.py)
+**Path:** [vts_boot_L3_VerifyBootReasonExternalCause.py](../../host/tests/vts_boot_L3_VerifyBootReasonExternalCause.py)
 
 **Purpose:** 
-Validates that the device boot reason is correctly set and retrieved after a reboot. This test verifies that the boot reason persists across device reboots and matches the expected value.
+Validates that the device correctly identifies and reports boot reasons triggered by external events. This test triggers a reboot with each boot reason from the config and verifies the device correctly reports it after coming back up.
 
 **Test Flow:**
 
@@ -326,14 +375,16 @@ graph TD
     C --> D[Reboot Device with Boot Reason]
     D --> E[Wait for Device to Boot]
     E --> F[Reinitialize Test Framework]
-    F --> G[Run C++ Test: checkBootReason]
-    G --> H{Boot Reason Matches?}
-    H -->|Yes| I[Log Success]
-    H -->|No| J[FAIL: Boot Reason Mismatch]
-    I --> K{More Boot Reasons?}
-    J --> K
-    K -->|Yes| C
-    K -->|No| L[PASS: All Tests Complete]
+    F --> G[Write Expected Boot Reason to ValidateBootReason in YAML]
+    G --> H[Copy YAML Config to Target Device]
+    H --> I[Run C++ Test: checkBootReason]
+    I --> J{Boot Reason Matches?}
+    J -->|Yes| K[Log Success]
+    J -->|No| L[FAIL: Boot Reason Mismatch]
+    K --> M{More Boot Reasons?}
+    L --> M
+    M -->|Yes| C
+    M -->|No| N[PASS: All Tests Complete]
 ```
 
 **Test Steps:**
@@ -342,7 +393,9 @@ graph TD
   - Trigger device reboot with specified boot reason
   - Wait for device to reboot and become accessible
   - Reinitialize test framework after reboot
-  - Execute C++ test case `checkBootReason` to verify boot reason
+  - Write expected boot reason to `ValidateBootReason` in `vts_l3_boot.yaml`
+  - Copy updated `vts_l3_boot.yaml` to target device
+  - Execute C++ test case `checkBootReason` to verify boot reason against `ValidateBootReason`
   - Validate that retrieved boot reason matches expected value
 - Log results for each boot reason test
 - Report overall test success/failure
@@ -376,8 +429,10 @@ graph TD
     K --> L{Device Up?}
     L -->|No| M[FAIL: Device Not Accessible]
     L -->|Yes| N[Reinitialize Framework]
-    N --> O[Execute C++ Test: checkBootReason]
-    O --> P{Boot Reason Correct?}
+    N --> O[Write Expected Boot Reason to ValidateBootReason in YAML]
+    O --> OC[Copy YAML Config to Target Device]
+    OC --> P2[Execute C++ Test: checkBootReason]
+    P2 --> P{Boot Reason Correct?}
     P -->|No| Q[FAIL: Wrong Boot Reason]
     P -->|Yes| R{Check File Persistence}
     R --> S{File Should Persist?}
@@ -405,47 +460,21 @@ graph TD
   - Wait for device to reboot
   - Verify device is accessible via network ping
   - Reinitialize test framework after reboot
-  - Execute C++ test `checkBootReason` to verify boot reason
+  - Write expected boot reason to `ValidateBootReason` in `vts_l3_boot.yaml`
+  - Copy updated `vts_l3_boot.yaml` to target device
+  - Execute C++ test `checkBootReason` to verify boot reason against `ValidateBootReason`
   - Validate boot reason matches expected value
-  - Check file persistence based on reset type:
-    - MAINTENANCE_REBOOT/SOFTWARE_REBOOT: Volatile files should persist
-    - FULL_SYSTEM_RESET: Non-volatile files should be deleted
 - Log results for each reset type test
 - Report overall test success/failure
 
----
+**Expected Boot Reasons per Reset Type:**
 
-#### Verify Power Source — `vts_boot_L3_VerifyPowerSource.py`
-
-**Path:** [vts_boot_L3_VerifyPowerSource.py](../../host/tests/vts_boot_L3_VerifyPowerSource.py)
-
-**Purpose:**
-Validates that the device correctly reports its current power source (PSU, USB, POE, or UNKNOWN). This test verifies the power source detection functionality of the Boot HAL.
-
-**Test Flow:**
-
-```mermaid
-graph TD
-    A[Start Test] --> B[Initialize Test Framework]
-    B --> C[Execute C++ Test: checkPowerSource]
-    C --> D[Call getPowerSource API]
-    D --> E{API Success?}
-    E -->|No| F[FAIL: API Error]
-    E -->|Yes| G[Retrieve Power Source Value]
-    G --> H{Valid PowerSource Enum?}
-    H -->|No| I[FAIL: Invalid Value]
-    H -->|Yes| J[Log Power Source]
-    J --> K[PASS: Test Complete]
-```
-
-**Test Steps:**
-- Initialize test framework and connect to device
-- Execute C++ test case `checkPowerSource`
-- Call `getPowerSource()` API via Boot HAL
-- Verify API returns successfully
-- Validate returned power source is a valid enum value (UNKNOWN, PSU, USB, POE)
-- Log the detected power source
-- Report test result
+| Reset Type | File Location | File Persists? | Expected Boot Reason |
+|------------|--------------|----------------|----------------------|
+| MAINTENANCE_REBOOT | Volatile | Yes | MAINTENANCE_REBOOT |
+| SOFTWARE_REBOOT | Volatile | Yes | WARM_RESET |
+| FULL_SYSTEM_RESET | Non-Volatile | No | WARM_RESET |
+| Other | None | N/A | WARM_RESET |
 
 ---
 
@@ -454,110 +483,67 @@ graph TD
 **Path:** [vts_boot_L3_VerifyOverrideBootReason.py](../../host/tests/vts_boot_L3_VerifyOverrideBootReason.py)
 
 **Purpose:**
-Validates the boot reason override functionality by testing whether a manually set boot reason persists or is overridden after a reboot, depending on the reset type used. Tests two scenarios:
-- **Matrix 2A**: Override with SOFTWARE_REBOOT (should preserve override)
-- **Matrix 2B**: Override with other reset types (should ignore override)
+Validates the boot reason override functionality by testing whether a manually set boot reason persists or is ignored after a reboot, depending on the reset type used.
+- **SOFTWARE_REBOOT**: override should be preserved
+- **All other reset types**: override should be ignored; actual boot reason is determined by the reset type
 
 **Test Flow:**
 
 ```mermaid
 graph TD
-    A[Start Test] --> B[Load Test Matrices from Config]
-    B --> C{Test Matrix}
-    C -->|Matrix 2A| D[Override with SOFTWARE_REBOOT]
-    C -->|Matrix 2B| E[Override with Other Reset Types]
-    D --> F[For Each Test Case in Matrix 2A]
-    E --> G[For Each Test Case in Matrix 2B]
-    F --> H[Execute C++ Test: overrideBootReason]
-    G --> H
-    H --> I[Set Boot Reason Override]
-    I --> J[Wait for Persistence]
-    J --> K[Execute C++ Test: rebootSystem]
-    K --> L[Device Reboots with Reset Type]
-    L --> M[Wait for Device Boot]
-    M --> N[Verify Device Accessible]
-    N --> O{Device Up?}
-    O -->|No| P[FAIL: Device Not Accessible]
-    O -->|Yes| Q[Reinitialize Framework]
-    Q --> R[Execute C++ Test: checkBootReason]
+    A[Start Test] --> B[For Each Test Case OVR-01 to OVR-05]
+    B --> C[Execute C++ Test: overrideBootReason]
+    C --> D[Set Boot Reason Override]
+    D --> E[Execute C++ Test: rebootSystem]
+    E --> F[Device Reboots with Reset Type]
+    F --> G[Wait for Device Boot]
+    G --> H[Verify Device Accessible]
+    H --> I{Device Up?}
+    I -->|No| J[FAIL: Device Not Accessible]
+    I -->|Yes| K[Reinitialize Framework]
+    K --> QW[Write Expected Boot Reason to ValidateBootReason in YAML]
+    QW --> QC[Copy YAML Config to Target Device]
+    QC --> R[Execute C++ Test: checkBootReason]
     R --> S{Boot Reason Matches Expected?}
     S -->|No| T[FAIL: Wrong Boot Reason]
     S -->|Yes| U[Log Success]
     U --> V{More Test Cases?}
-    P --> V
+    J --> V
     T --> V
-    V -->|Yes| F
-    V -->|Yes| G
+    V -->|Yes| B
     V -->|No| W[PASS: All Tests Complete]
 ```
 
 **Test Steps:**
-- Load test matrices from L3 configuration file:
-  - **Matrix 2A**: Tests with SOFTWARE_REBOOT (override should persist)
-  - **Matrix 2B**: Tests with other reset types (override should be ignored)
-- For each test case in the matrices:
+- For each test case (OVR-01 to OVR-05):
   - Execute C++ test `overrideBootReason` to set boot reason override
-  - Wait for boot reason to be persisted
   - Execute C++ test `rebootSystem` with specified reset type
   - Device reboots with selected reset type
   - Wait for device to boot and become accessible
   - Verify device is reachable via network ping
   - Reinitialize test framework after reboot
-  - Execute C++ test `checkBootReason` to retrieve actual boot reason
-  - Validate boot reason matches expected value:
-    - Matrix 2A: Should match override boot reason (preserved)
-    - Matrix 2B: Should match reset-type-based boot reason (override ignored)
+  - Write expected boot reason to `ValidateBootReason` in `vts_l3_boot.yaml`
+  - Copy updated `vts_l3_boot.yaml` to target device
+  - Execute C++ test `checkBootReason` to retrieve actual boot reason from `ValidateBootReason`
+  - Validate boot reason matches expected value
 - Log results for each test case
-- Report overall test success/failure for both matrices
+- Report overall test success/failure
 
-**Test Matrices:**
+**Test Cases:**
 
-##### Matrix 2A: Override with SOFTWARE_REBOOT (Override Should Persist)
+| Test ID | Boot Reason Override | Reset Type | Expected Boot Reason | Override Behavior |
+|---------|---------------------|------------|---------------------|-------------------|
+| OVR-01 | WATCHDOG | SOFTWARE_REBOOT | WATCHDOG | Preserved ✓ |
+| OVR-02 | WATCHDOG | MAINTENANCE_REBOOT | MAINTENANCE_REBOOT | Ignored ✓ |
+| OVR-03 | THERMAL_RESET | FULL_SYSTEM_RESET | WARM_RESET | Ignored ✓ |
+| OVR-04 | COLD_BOOT | INVALIDATE_CURRENT_APPLICATION_IMAGE | WARM_RESET | Ignored ✓ |
+| OVR-05 | STR_AUTH_FAILURE | FORCE_DISASTER_RECOVERY | WARM_RESET | Ignored ✓ |
 
-This matrix validates that boot reason overrides are preserved when using SOFTWARE_REBOOT.
-
-| Test ID | Boot Reason Override | Reason String | Reset Type | Expected Boot Reason | Result |
-|---------|---------------------|---------------|------------|---------------------|---------|
-| OVR-SW-01 | WATCHDOG | Watchdog override | SOFTWARE_REBOOT | WATCHDOG | Override Preserved ✓ |
-| OVR-SW-02 | THERMAL_RESET | Thermal override | SOFTWARE_REBOOT | THERMAL_RESET | Override Preserved ✓ |
-| OVR-SW-03 | STR_AUTH_FAILURE | Auth failure override | SOFTWARE_REBOOT | STR_AUTH_FAILURE | Override Preserved ✓ |
-| OVR-SW-04 | COLD_BOOT | Cold boot override | SOFTWARE_REBOOT | COLD_BOOT | Override Preserved ✓ |
-| OVR-SW-05 | MAINTENANCE_REBOOT | Maintenance override | SOFTWARE_REBOOT | MAINTENANCE_REBOOT | Override Preserved ✓ |
-| OVR-SW-06 | WARM_RESET | Warm reset override | SOFTWARE_REBOOT | WARM_RESET | Override Preserved ✓ |
-| OVR-SW-07 | ERROR_UNKNOWN | Unknown override | SOFTWARE_REBOOT | ERROR_UNKNOWN | Override Preserved ✓ |
-
-**Expected Behavior:** When using SOFTWARE_REBOOT, the boot reason set via `setBootReason()` should persist and be returned by `getBootReason()` after the reboot.
+**Expected Behavior:**
+- `SOFTWARE_REBOOT`: boot reason set via `setBootReason()` is preserved and returned by `getBootReason()` after reboot
+- All other reset types: override is ignored; boot reason is determined by the reset type used
 
 ---
-
-##### Matrix 2B: Override with Other Reset Types (Override Should Be Ignored)
-
-This matrix validates that boot reason overrides are ignored when using reset types other than SOFTWARE_REBOOT.
-
-| Test ID | Boot Reason Override | Reason String | Reset Type | Expected Boot Reason | Result |
-|---------|---------------------|---------------|------------|---------------------|---------|
-| OVR-IG-01 | WATCHDOG | Watchdog override attempt | FULL_SYSTEM_RESET | WARM_RESET | Override Ignored ✓ |
-| OVR-IG-02 | THERMAL_RESET | Thermal override attempt | INVALIDATE_CURRENT_APPLICATION_IMAGE | WARM_RESET | Override Ignored ✓ |
-| OVR-IG-03 | STR_AUTH_FAILURE | Auth failure override attempt | FORCE_DISASTER_RECOVERY | WARM_RESET | Override Ignored ✓ |
-| OVR-IG-04 | COLD_BOOT | Cold boot override attempt | MAINTENANCE_REBOOT | MAINTENANCE_REBOOT | Override Ignored ✓ |
-| OVR-IG-05 | WATCHDOG | Watchdog override attempt 2 | MAINTENANCE_REBOOT | MAINTENANCE_REBOOT | Override Ignored ✓ |
-
-**Expected Behavior:** When using reset types other than SOFTWARE_REBOOT (such as FULL_SYSTEM_RESET, MAINTENANCE_REBOOT, etc.), the boot reason override should be ignored and the actual boot reason should be determined by the reset type used:
-- FULL_SYSTEM_RESET → WARM_RESET
-- INVALIDATE_CURRENT_APPLICATION_IMAGE → WARM_RESET
-- FORCE_DISASTER_RECOVERY → WARM_RESET
-- MAINTENANCE_REBOOT → MAINTENANCE_REBOOT
-
----
-
-**Summary:**
-- **Total Tests**: 12 test cases (7 in Matrix 2A + 5 in Matrix 2B)
-- **Matrix 2A Purpose**: Verify override functionality works with SOFTWARE_REBOOT
-- **Matrix 2B Purpose**: Verify override is correctly ignored for other reset types
-- **Configuration File**: [vts_l3_boot.yaml](../../test_configuration/vts_l3_boot.yaml)
-
-
-
 
 ## Note
 

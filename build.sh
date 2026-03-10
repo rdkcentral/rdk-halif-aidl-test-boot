@@ -232,6 +232,7 @@ install_test()
     cp -r ${PROFILES_DIR} ${INSTALL_PATH}
     cp -r "${TOP}/vcomponent/vcomponent_configurations" ${INSTALL_PATH}
     cp -r "${TOP}/vcomponent/boot_populate_controlPlane.sh" ${INSTALL_PATH}
+    cp -r "${TOP}/test_configuration" ${INSTALL_PATH}
 
     cd ${INSTALL_PATH}
     tar -czf ${OUT_TAR_FILE} *

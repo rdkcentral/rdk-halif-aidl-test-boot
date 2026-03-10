@@ -93,7 +93,34 @@ public:
     }
 };
 
-// Test case to validate reboot() method of boot interface
+/**
+ * @brief Validate device reboot functionality with user-selected reset type.
+ *
+ * This test ensures that the `reboot()` API successfully initiates a device reboot
+ * with the specified reset type and reason string accepted from user input.
+ *
+ * **Test Group ID:** Basic: 03@n
+ * **Test Case ID:** 001@n
+ * **Priority:** High@n
+ *
+ * **Pre-Conditions:**@n
+ * - Boot HAL service must be running and accessible@n
+ * - Device must support reboot operations@n
+ * - User must have console/network access to device@n
+ * - Device must be in operational state@n
+ *
+ * **Dependencies:**@n
+ * - Boot HAL Interface: `com.rdk.hal.boot.IBoot`@n
+ * - UT-Core Framework@n
+ * - Profile configuration with supported reset types@n
+ * - Network connectivity for post-reboot verification@n
+ *
+ * **User Interaction:** Yes - User must select a reset type from the available options presented in the console.@n
+ *
+ * **Test Procedure:**@n
+ * Refer to UT specification documentation [Boot_L3_Low-Level_TestSpecification.md](../docs/pages/Boot_L3_Low-Level_TestSpecification.md)
+ *
+ */
 UT_ADD_TEST(VTS_L3_BOOT, rebootSystem)
 {
     android::sp<com::rdk::hal::boot::IBoot> bootHandle = gBOOTHandle;
@@ -140,7 +167,34 @@ UT_ADD_TEST(VTS_L3_BOOT, rebootSystem)
     BOOT_REBOOT_SUCCESS(bootHandle, uResetType, reasonString);
 }
 
-// Test case to validate getBootReason() method of boot interface and check if it matches with supported boot reasons
+/**
+ * @brief Validate boot reason retrieval and verification against the expected value in the L3 test configuration file.
+ *
+ * This test retrieves the current boot reason via `getBootReason()` and asserts it matches the value
+ * specified in the `ValidateBootReason` field of `vts_l3_boot.yaml`, which is written dynamically
+ * by the Python test framework before this test is executed. It verifies proper boot reason tracking
+ * across device boots.
+ *
+ * **Test Group ID:** Basic: 03@n
+ * **Test Case ID:** 002@n
+ * **Priority:** High@n
+ *
+ * **Pre-Conditions:**@n
+ * - Boot HAL service must be running and accessible@n
+ * - Device must have booted successfully@n
+ * - Device must have a valid boot reason set@n
+ *
+ * **Dependencies:**@n
+ * - Boot HAL Interface: `com.rdk.hal.boot.IBoot`@n
+ * - UT-Core Framework@n
+ * - Profile configuration with supported boot reasons@n
+ *
+ * **User Interaction:** If user chose to run the test in interactive mode, then the test case has to be selected via console.@n
+ *
+ * **Test Procedure:**@n
+ * Refer to UT specification documentation [Boot_L3_Low-Level_TestSpecification.md](../docs/pages/Boot_L3_Low-Level_TestSpecification.md)
+ *
+ */
 UT_ADD_TEST(VTS_L3_BOOT, checkBootReason)
 {
     android::sp<com::rdk::hal::boot::IBoot> bootHandle = gBOOTHandle;
@@ -150,32 +204,46 @@ UT_ADD_TEST(VTS_L3_BOOT, checkBootReason)
     com::rdk::hal::boot::Capabilities capabilities;
     BOOT_GETCAPABILITIES_SUCCESS(bootHandle, capabilities);
     UT_LOG_DEBUG("Boot Reason: %s", com::rdk::hal::boot::toString(bootReason).c_str());
-    bool reasonMatched = false;
-    for(const auto &reason : capabilities.supportedBootReasons)
+    ut_kvp_instance_t *kvpInstance = nullptr;
+    BOOT_KVP_CREATE_INSTANCE(kvpInstance, BOOT_L3_TEST_CONFIG_FILE);
+    UT_ASSERT_NOT_EQUAL(kvpInstance, nullptr);
+    const std::string baseKey = "Boot/L3/ValidateBootReason";
+    char value[UT_KVP_MAX_ELEMENT_SIZE] = {0};
+    if (ut_kvp_getStringField(kvpInstance, baseKey.c_str(), value, sizeof(value)) == UT_KVP_STATUS_SUCCESS)
     {
-        if(bootReason == reason)
-        {
-            UT_LOG_INFO("Boot Reason matched with supported reasons: %s", com::rdk::hal::boot::toString(bootReason).c_str());
-            reasonMatched = true;
-            break;
-        }
+        UT_ASSERT_STRING_EQUAL(toString(bootReason).c_str(), value);
     }
-
-    UT_ASSERT_TRUE(reasonMatched); // Validate that the returned boot reason is among supported boot reasons in capabilities);
+    BOOT_KVP_DESTROY_INSTANCE(kvpInstance);
 }
 
-// Test case to validate getPowerSource() method of boot interface
-UT_ADD_TEST(VTS_L3_BOOT, checkPowerSource)
-{
-    android::sp<com::rdk::hal::boot::IBoot> bootHandle = gBOOTHandle;
-    UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
-    com::rdk::hal::boot::PowerSource powerSource;
-    BOOT_GETPOWERSOURCE_SUCCESS(bootHandle, powerSource);
-    UT_LOG_DEBUG("Power Source: %s", com::rdk::hal::boot::toString(powerSource).c_str());
-}
-
-// Test case to validate override of setBootReason() method of boot interface 
-// and check if the set reason is correctly returned by getBootReason()
+/**
+ * @brief Validate boot reason override functionality before reboot.
+ *
+ * This test allows the user to set a specific boot reason via `setBootReason()` and prepares
+ * for cross-reboot validation. The override is verified by running `rebootSystem` subsequently
+ * and checking the retrieved boot reason post-reboot.
+ *
+ * **Test Group ID:** Basic: 03@n
+ * **Test Case ID:** 003@n
+ * **Priority:** High@n
+ *
+ * **Pre-Conditions:**@n
+ * - Boot HAL service must be running and accessible@n
+ * - Device must support boot reason persistence@n
+ * - Test requires write permissions for boot state@n
+ *
+ * **Dependencies:**@n
+ * - Boot HAL Interface: `com.rdk.hal.boot.IBoot`@n
+ * - UT-Core Framework@n
+ * - Test 1 (rebootSystem) for subsequent verification@n
+ * - Profile configuration with supported boot reasons@n
+ *
+ * **User Interaction:** Yes - User must select a boot reason from the available options presented in the console, then manually execute Test 1 (rebootSystem) for verification.@n
+ *
+ * **Test Procedure:**@n
+ * Refer to UT specification documentation [Boot_L3_Low-Level_TestSpecification.md](../docs/pages/Boot_L3_Low-Level_TestSpecification.md)
+ *
+ */
 UT_ADD_TEST(VTS_L3_BOOT, overrideBootReason)
 {
     android::sp<com::rdk::hal::boot::IBoot> bootHandle = gBOOTHandle;

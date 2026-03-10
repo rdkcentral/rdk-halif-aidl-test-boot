@@ -35,4 +35,3 @@ deviceConfig:
         wait_time: 40 #Configurable timeout value to limit the total duration of individual tests
         test:
             profile: "../../profiles/hfp-boot-vcomponent.yaml" #HFP profile used to meet platform requirements
-            controller_port: 9081 #Port where the ut-controller is listening

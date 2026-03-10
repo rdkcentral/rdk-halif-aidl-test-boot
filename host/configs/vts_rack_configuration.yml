@@ -87,3 +87,11 @@ rackConfig:
                         upload_url_base_dir: "sftp://server-address/home/workspace/tftp/rack1/slot1" # alternative upload location
                         httpProxy:    # Local Proxy if required
                         workspaceDirectory: './logs/workspace'   # Local working directory
+                    dutRebootController:
+                        type: virtual-dut-reboot-controller
+                        vendor: "vComponent"
+                        address: "127.0.0.1" # Needs to be be filled out with IP address
+                        username: "" # Needs to be filled out with login username
+                        password: '' # Needs to be filled out with login password
+                        port: 5522
+                        control_port: 9081

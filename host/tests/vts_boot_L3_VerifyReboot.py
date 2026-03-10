@@ -22,11 +22,8 @@
 #* ******************************************************************************
 
 import os
-from re import match
-import re
 import sys
 import time
-import subprocess
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(dir_path, "../"))
@@ -67,7 +64,6 @@ class  vts_boot_L3_VerifyReboot(bootHelperClass):
 
         for index, reset_type in enumerate(self.l3TestConfig.L3.ResetTypes):
             self.log.stepStart(f"Testing {reset_type}...")
-            self.testcase = "rebootSystem"
             
             # Define test parameters based on reset type
             if reset_type in ["MAINTENANCE_REBOOT", "SOFTWARE_REBOOT"]:
@@ -92,62 +88,19 @@ class  vts_boot_L3_VerifyReboot(bootHelperClass):
                     self.log.error(f"Failed to create file before {reset_type} reboot.")
                     results = False
                     continue
-            
-            # Perform reboot using UT menu
-            self.utMenu.start()
-            promptWithAnswers = [
-                {    
-                    "query_type": "direct",
-                    "query": "Enter reset types from below options:",
-                    "input": str(index)  # As the UT menu expects an index input for reset type selection
-                }    
-            ]
 
-            menuOutput = self.utMenu.select(BOOT_L3_TEST_SUITE_NAME, self.testcase, promptWithAnswers, self.waitTime, False)
-            self.log.info(menuOutput)
-            sleepTime = self.cpe.get("wait_time")
-            self.log.info(f"Waiting for {sleepTime} seconds to allow device to reboot...")
-            time.sleep(sleepTime)
-            self.hal_session.close()
-            
-            # Verify device booted successfully
-            result = self.pingTest(logPingTime=True)
-            if not result:
-                self.log.error(f"Device did not boot up successfully after {reset_type} reboot.")
+            # Perform reboot using UT menu and verify device boots
+            if not self.performAndVerifyReboot(BOOT_L3_TEST_SUITE_NAME, index, reset_type):
                 results = False
                 continue
-            
+
             super().__init__(self.testName, "3", self.log) #Reinitialize after reboot
             
-            # Check boot reason using UT menu
-            self.testcase = "checkBootReason"
-            self.hal_session = self.dut.getConsoleSession("default")
-            self.utMenu.start()
-            result = self.utMenu.select(BOOT_L3_TEST_SUITE_NAME, self.testcase, None, self.waitTime, False)
-            pattern = r"Result getBootReason\(OUT:bootReason\), status:\[.*?bootReason:(?P<bootReason>\w+)\]"
-            match = re.search(pattern, result)
-            if match:
-                bootReason = match.group("bootReason")
-            else:
-                self.log.error(f"Failed to parse boot reason from UT menu output after {reset_type} reboot.")
+            # Check boot reason using modular function
+            if not self.verifyBootReason(reset_type, expected_boot_reason):
                 results = False
                 continue
 
-            results = self.utMenu.collect_results(result, True)
-            if not results: 
-                self.log.error(f"Failed to verify boot reason after {reset_type} reboot.")
-                results = False
-                continue
-            
-            # Verify boot reason matches expected
-            if bootReason == expected_boot_reason:
-                results = results and True
-                self.log.stepResult(results, f"Boot reason '{bootReason}' matches expected '{expected_boot_reason}'.")
-            else:
-                results = False
-                self.log.stepResult(results, f"Boot reason '{bootReason}' does not match expected '{expected_boot_reason}'.")
-                continue
-            
             # Verify file persistence if applicable
             if file_directory:
 
@@ -157,31 +110,30 @@ class  vts_boot_L3_VerifyReboot(bootHelperClass):
                 time.sleep(2)  # Wait for command to execute and output to be ready
                 output = self.hal_session.read_until(self.cpe.get("prompt"), timeout=10)
                 self.log.info(f"File check command output: {output}")
-                
+
                 file_exists = self.parseFileCheckLog(output)
-                
+
                 if file_should_persist and file_exists:
                     results = results and True
-                    self.log.stepResult(results, f"File still exists after {reset_type} reboot as expected. Test Passed.")
+                    self.log.stepResult(results, f"File still exists after {reset_type} reboot as expected. PASSED ✅.")
                 elif not file_should_persist and not file_exists:
                     results = results and True
-                    self.log.stepResult(results, f"File is deleted after {reset_type} reboot as expected. Test Passed.")
+                    self.log.stepResult(results, f"File is deleted after {reset_type} reboot as expected. PASSED ✅.")
                 elif file_should_persist and not file_exists:
                     results = False
-                    self.log.stepResult(results, f"File was deleted after {reset_type} reboot unexpectedly. Test Failed.")
+                    self.log.stepResult(results, f"File was deleted after {reset_type} reboot unexpectedly. FAILED ❌.")
                     continue
                 else:  # not file_should_persist and file_exists
                     results = False
-                    self.log.stepResult(results, f"File still exists after {reset_type} reboot unexpectedly. Test Failed.")
+                    self.log.stepResult(results, f"File still exists after {reset_type} reboot unexpectedly. FAILED ❌.")
                     continue
-                
+
                 # Clean up the file if it still exists
                 if file_exists:
                     self.hal_session.write(f"rm {file_directory}{L3_TEST_CONFIG_FILE_NAME}")
             else:
                 # For other reset types, just log success
                 self.log.stepResult(results, f"Device rebooted successfully with {reset_type}. Test Passed.")
-        
         return results
 
 if __name__ == '__main__':

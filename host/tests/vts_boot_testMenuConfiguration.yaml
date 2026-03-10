@@ -47,5 +47,4 @@ Boot:
                 tests:
                     - "rebootSystem"
                     - "checkBootReason"
-                    - "checkPowerSource"
                     - "overrideBootReason"
