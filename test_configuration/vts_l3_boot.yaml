@@ -1,0 +1,17 @@
+Boot:
+  L3:
+    BootReason: # The list of valid boot reasons from BootReason.h for testing
+      - WATCHDOG
+      - MAINTENANCE_REBOOT
+      - THERMAL_RESET
+      - WARM_RESET
+      - COLD_BOOT
+      - STR_AUTH_FAILURE
+      - ERROR_UNKNOWN
+    ResetTypes: # The list of valid reset types from ResetType.h for testing
+      - FULL_SYSTEM_RESET
+      - INVALIDATE_CURRENT_APPLICATION_IMAGE
+      - FORCE_DISASTER_RECOVERY
+      - MAINTENANCE_REBOOT
+      - SOFTWARE_REBOOT
+    ValidateBootReason: WATCHDOG # This field will be dynamically updated during testing to validate the boot reason
