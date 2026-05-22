@@ -21,8 +21,8 @@
 
 This document provides an overview of the testing requirements for the Boot module. It outlines the scope of testing, objectives, testing levels and approaches and specific test requirements.
 
-- Boot Interface Definitions - [Boot HAL](https://github.com/rdkcentral/rdk-halif-aidl/tree/0.13.1/boot/current/com/rdk/hal/boot)
-- Boot Feature Profile - [HFP-Boot](https://github.com/rdkcentral/rdk-halif-aidl/blob/0.13.1/boot/current/hfp-boot.yaml)
+- Boot Interface Definitions - [Boot HAL](https://github.com/rdkcentral/rdk-halif-aidl/tree/0.15.0/boot/current/com/rdk/hal/boot)
+- Boot Feature Profile - [HFP-Boot](https://github.com/rdkcentral/rdk-halif-aidl/blob/0.15.0/boot/current/hfp-boot.yaml)
 
 ## Module Description
 
