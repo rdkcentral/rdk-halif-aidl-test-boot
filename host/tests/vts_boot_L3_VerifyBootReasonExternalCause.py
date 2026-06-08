@@ -33,14 +33,14 @@ class vts_boot_L3_VerifyBootReasonExternalCause(bootHelperClass):
     Runs L3 test to verify boot reason after reboot from external cause.
     Tests that the device correctly identifies and reports boot reasons triggered by external events.
     """
-    def __init__(self, log:logModule=None):
+    def __init__(self, log:logModule=None, testMenuConfigFile:str=None, moduleName:str=None, artifactDirPath:str=None):
         """
         Initializes the test class
         """
         self.testName = "BOOT_L3_VerifyBootReasonExternalCause"
         qcId = "1"
         
-        super().__init__(self.testName, qcId, log)
+        super().__init__(self.testName, qcId, log, testMenuConfigFile, moduleName, artifactDirPath)
 
     def testFunction(self):
         """
@@ -56,7 +56,7 @@ class vts_boot_L3_VerifyBootReasonExternalCause(bootHelperClass):
             self.log.stepStart(f"Starting test for boot reason: {bootReasonExpected}")
             boot_result = self.externallyTriggeredReboot(expectedBootReason=bootReasonExpected)
             self.log.info(f"Reboot done with boot reason: {bootReasonExpected}")
-            super().__init__(self.testName, "1", self.log) #Reinitialize after reboot
+            super().__init__(self.testName, "1", self.log, self._testMenuConfigFile, self._moduleName, self._artifactDirPath) # Reinitialize after reboot
             test_result = self.verifyBootReason("external cause", bootReasonExpected)
             totatlResult = totatlResult and bool(boot_result) and bool(test_result)
             self.log.info(f"Boot reason '{bootReasonExpected}' test completed.\n")
@@ -68,3 +68,5 @@ if __name__ == '__main__':
     summaryLog = logModule(summaryLogName, level=logModule.INFO)
     test = vts_boot_L3_VerifyBootReasonExternalCause(summaryLog)
     test.run(False)
+
+VTS_BOOT_L3_VerifyBootReasonExternalCause = vts_boot_L3_VerifyBootReasonExternalCause

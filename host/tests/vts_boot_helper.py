@@ -30,7 +30,6 @@ from typing import Literal
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(dir_path, "../"))
 sys.path.append(os.path.join(dir_path, "../dutReboot"))
-sys.path.append(os.path.join(dir_path, "../dutReboot"))
 
 from raft.framework.plugins.ut_raft.configRead import ConfigRead
 from raft.framework.plugins.ut_raft import utHelperClass
@@ -47,12 +46,20 @@ BOOT_L3_TEST_CONFIG_FILE = os.path.join(os.path.join(dir_path, "../../test_confi
 
 class bootHelperClass(utHelperClass):
 
-    def __init__(self, testName:str, qcId:str, log:logModule=None):
+    def __init__(self, testName:str, qcId:str, log:logModule=None, testMenuConfigFile:str=None, moduleName:str=None, artifactDirPath:str=None):
         """
         Initializes the test class
         """
-        self.moduleName = "Boot"
+        if moduleName is not None:
+            # Unified test case
+            self.moduleName = moduleName
+        else:
+            # Individual test case
+            self.moduleName = "Boot"
         self.profile_moduleName = "Boot"
+        self._moduleName = moduleName        # original param: None (standalone) or "VTS" (unified)
+        self._testMenuConfigFile = testMenuConfigFile
+        self._artifactDirPath = artifactDirPath
         super().__init__(testName, qcId, log)
 
         self.log = log
@@ -66,21 +73,25 @@ class bootHelperClass(utHelperClass):
         self.moduleHFPFile = os.path.join(dir_path, self.deviceTestSetup.get("profile"))
         self.nonvolatileDirectoryOnDevice = self.cpe.get("boot_non_volatile_directory")
         self.volatileDirectoryOnDevice = self.cpe.get("boot_volatile_directory")
-        profileOnTarget = os.path.join(self.targetWorkspace, "profiles")
-        profileOnTarget = os.path.join(profileOnTarget, os.path.basename(self.moduleHFPFile))
-        profileOnTarget = profileOnTarget.replace("\\", "/")
-        platformConfigOnTarget = os.path.join(self.targetWorkspace, "test_configuration")
-        platformConfigOnTarget = platformConfigOnTarget.replace("\\", "/")
-        self.l3TestConfigFolder = os.path.join(self.targetWorkspace, "test_configuration")
-        self.l3TestConfigFolder = self.l3TestConfigFolder.replace("\\", "/")
+        # Unified mode nests artifacts under "bin/"; individual mode does not.
+        bin_prefix = ("bin",) if moduleName is not None else ()
+        profileOnTarget = os.path.join(self.targetWorkspace, *bin_prefix, "profiles", os.path.basename(self.moduleHFPFile)).replace("\\", "/")
+        self.l3TestConfigFolder = os.path.join(self.targetWorkspace, *bin_prefix, "test_configuration").replace("\\", "/")
         self.waitTime = self.cpe.get("wait_time")
         self.device_type = self.cpe.get("device_type")
         self.platform = self.cpe.get("platform")
 
         # Load test menu and test case configuration files
-        self.l3TestConfig = ConfigRead(BOOT_L3_TEST_CONFIG_FILE, self.moduleName)
-        self.testMenuConfiguration = ConfigRead(BOOT_TEST_MENU_CONFIGURATION_FILE, self.moduleName)
-        self.testCaseConfiguration = ConfigRead(BOOT_TESTCASES_CONFIGURATION_FILE, self.moduleName)
+        # Boot-specific config files always use "Boot" as the top-level key
+        self.l3TestConfig = ConfigRead(BOOT_L3_TEST_CONFIG_FILE, self.profile_moduleName)
+        bootMenuConfigFile = testMenuConfigFile if testMenuConfigFile is not None else BOOT_TEST_MENU_CONFIGURATION_FILE
+        if moduleName is None:
+            # Only needed while running individual tests
+            self.testCaseConfiguration = ConfigRead(BOOT_TESTCASES_CONFIGURATION_FILE, self.profile_moduleName)
+        else:
+            # Unified test menu file (e.g. vts_l3_test_setup.yaml) uses moduleName key; boot-specific file uses "Boot"
+            menuConfigKey = self.moduleName if testMenuConfigFile is not None else self.profile_moduleName
+            self.testMenuConfiguration = ConfigRead(bootMenuConfigFile, menuConfigKey)
         self.testMenuConfiguration.test.execute = self.testMenuConfiguration.test.execute + f" -p {profileOnTarget}"
 
         # Establish HAL session
@@ -97,7 +108,11 @@ class bootHelperClass(utHelperClass):
         # Copy required artifacts to target device
         self.utilities.change_directory(self.hal_session, self.targetWorkspace)
         for artifact in self.testMenuConfiguration.test.artifacts:
-            filesPath = os.path.join(dir_path, artifact)
+            filesPath = os.path.join(artifactDirPath, artifact) if artifactDirPath is not None else os.path.join(dir_path, artifact)
+            self.hal_session.write("ls " + self.targetWorkspace + "/" + os.path.basename(artifact) + "\n")
+            res = self.hal_session.read_until(self.hal_session.prompt, timeout=5)
+            if "No such file or directory" not in res:
+                continue  # File already exists on target, skip copying
             self.utilities.sftpCopy(self.hal_session, filesPath, self.targetWorkspace)
 
             if tarfile.is_tarfile(filesPath):
@@ -106,18 +121,29 @@ class bootHelperClass(utHelperClass):
                 target_tarfile = target_tarfile.replace("\\", "/")
                 self.utilities.untar(self.hal_session, target_tarfile, self.targetWorkspace)
 
-        self.utilities.change_directory(self.hal_session_1, self.targetWorkspace)
-        self.hal_session_1.write(f"./{self.cpe.get('boot_process_name')} &")
-        time.sleep(2)
-
-        # Initialize DUT Reboot Controller
-        control_port = self.dut.getField("control_port") if self.platform == "vDevice" else None
-        self.dutRebootController = DutRebootController(
-            log=self.log,
-            platform=self.platform,
-            session=self.session if self.platform == "vDevice" else None,
-            control_port=control_port if control_port else 8080
-        )
+        if moduleName is None:
+            # running individual tests
+            self.utilities.change_directory(self.hal_session_1, self.targetWorkspace)
+            self.hal_session_1.write(f"./{self.cpe.get('boot_process_name')} &")
+            time.sleep(2)
+        else:
+            # running unified tests - in this case we assume the boot process binary is already running on the target,
+            # since it is required for the unified test menu to function and we don't want to rely on user prompt
+            # during setup which can be problematic in automated runs. We will check if the boot process binary is
+            # already running, and if not, we will prompt the user to start it before proceeding with the tests.
+            actual_workspace = self.targetWorkspace
+            self.targetWorkspace = os.path.join(self.targetWorkspace, "/home/root/VTS")
+            bootProcessBinary = os.path.basename(self.cpe.get("boot_process_name"))
+            self.hal_session.write("ls " + self.targetWorkspace + "/" + bootProcessBinary + "\n")
+            res = self.hal_session.read_until(self.hal_session.prompt, timeout=5)
+            if "No such file or directory" not in res:
+                self.log.info(f"{bootProcessBinary} already exists on target, skipping user prompt and directly starting the boot process binary.")
+            else:
+                input(f"Please ensure the boot process binary is present in the target workspace {self.targetWorkspace}. Press Enter to continue...")
+            self.utilities.change_directory(self.hal_session_1, self.targetWorkspace)
+            self.hal_session_1.write(f"./{bootProcessBinary} &")
+            time.sleep(2)
+            self.targetWorkspace = actual_workspace + "/bin"# Restore original targetWorkspace value for unified tests
 
         # Initialize DUT Reboot Controller
         control_port = self.dut.getField("control_port") if self.platform == "vDevice" else None
@@ -153,10 +179,6 @@ class bootHelperClass(utHelperClass):
         self.hal_session = self.dut.getConsoleSession("default")
         self.utilities.change_directory(self.hal_session, self.targetWorkspace)
 
-        # Trigger reboot with specified boot reason using the controller
-        if not self.dutRebootController.triggerReboot(expectedBootReason):
-            self.log.error(f"Failed to trigger reboot with boot reason: {expectedBootReason}")
-            return False
         # Trigger reboot with specified boot reason using the controller
         if not self.dutRebootController.triggerReboot(expectedBootReason):
             self.log.error(f"Failed to trigger reboot with boot reason: {expectedBootReason}")
@@ -209,59 +231,15 @@ class bootHelperClass(utHelperClass):
         
         return True
 
-    def performAndVerifyReboot(self, suite_name: str, reset_index: int, reset_type: str) -> bool:
-        """
-        Performs reboot using UT menu and verifies device boots successfully.
-        
-        Args:
-            suite_name: The UT test suite name
-            reset_index: The index of reset type in the UT menu
-            reset_type: The reset type name for logging
-        
-        Returns:
-            bool: True if reboot and device boot verification succeeded, False otherwise
-        """
-        testcase = "rebootSystem"
-        self.utMenu.start()
-        promptWithAnswers = [
-            {    
-                "query_type": "direct",
-                "query": "Enter reset types from below options:",
-                "input": str(reset_index)
-            }    
-        ]
-
-        menuOutput = self.utMenu.select(suite_name, testcase, promptWithAnswers, self.waitTime, False)
-        self.log.info(menuOutput)
-        sleepTime = self.cpe.get("wait_time")
-        self.log.info(f"Waiting for {sleepTime} seconds to allow device to reboot...")
-        time.sleep(sleepTime)
-        self.hal_session.close()
-        
-        # Verify device booted successfully
-        result = self.pingTest(logPingTime=True)
-        if not result:
-            self.log.error(f"Device did not boot up successfully after {reset_type} reboot.")
-            return False
-        
-        return True
-
     def verifyBootReason(self, reset_type: str, expectedBootReason: str, test_id: str = None) -> bool:
         """
         Checks boot reason using UT menu and verifies it matches the expected boot reason.
-        
+
         Args:
             reset_type: The type of reset that was performed (for logging)
             expectedBootReason: The expected boot reason to verify against
             test_id: Optional test ID for more specific logging
-        
-        Checks boot reason using UT menu and verifies it matches the expected boot reason.
-        
-        Args:
-            reset_type: The type of reset that was performed (for logging)
-            expectedBootReason: The expected boot reason to verify against
-            test_id: Optional test ID for more specific logging
-        
+
         Returns:
             bool: True if boot reason matches expected, False otherwise
         """
@@ -269,7 +247,7 @@ class bootHelperClass(utHelperClass):
         # then copy the updated file to the target so the UT binary can validate against it.
         with open(BOOT_L3_TEST_CONFIG_FILE, "r") as f:
             l3Config = yaml.safe_load(f)
-        l3Config[self.moduleName]["L3"]["ValidateBootReason"] = expectedBootReason
+        l3Config[self.profile_moduleName]["L3"]["ValidateBootReason"] = expectedBootReason
         with open(BOOT_L3_TEST_CONFIG_FILE, "w") as f:
             yaml.dump(l3Config, f, default_flow_style=False)
         self.utilities.sftpCopy(self.hal_session, BOOT_L3_TEST_CONFIG_FILE, self.l3TestConfigFolder)
@@ -277,43 +255,22 @@ class bootHelperClass(utHelperClass):
         self.utilities.change_directory(self.hal_session, self.targetWorkspace)
         self.testcase = "checkBootReason"
         self.hal_session = self.dut.getConsoleSession("default")
-        self.hal_session = self.dut.getConsoleSession("default")
         self.utMenu.start()
 
         result = self.utMenu.select("VTS_L3_BOOT", self.testcase, None, self.waitTime, False)
-        
-        # Try multiple regex patterns to extract boot reason
-        patterns = [
-            r"Result getBootReason\(OUT:bootReason\), status:\[.*?bootReason:(?P<bootReason>\w+)\]",
-            r"bootReason:(?P<bootReason>[A-Z_]+)"
-        ]
-        
-        bootReason = None
-        for pattern in patterns:
-            match = re.search(pattern, result)
-            if match:
-                bootReason = match.group("bootReason")
-                break
-        
-        if not bootReason:
-            context = f"test {test_id}" if test_id else f"{reset_type} reboot"
-            self.log.error(f"Failed to parse boot reason from UT menu output after {context}.")
-            return False
+        self.log.info(result)
+
+        context = f"test {test_id}" if test_id else f"{reset_type} reboot"
+        test_case = test_id if test_id else f"{reset_type}_{expectedBootReason}"
 
         results = self.utMenu.collect_results(result, True)
         if not results:
-            context = f"test {test_id}" if test_id else f"{reset_type} reboot"
             self.log.error(f"Failed to verify boot reason after {context}.")
-            return False
-        
-        # Verify boot reason matches expected
-        test_case = test_id if test_id else f"{reset_type}_{expectedBootReason}"
-        if bootReason == expectedBootReason:
-            self.log.stepResult(True, f"Test Suit: {self.testName} Test Case: {test_case}")
-            return True
-        else:
             self.log.stepResult(False, f"Test Suit: {self.testName} Test Case: {test_case}")
             return False
+
+        self.log.stepResult(True, f"Test Suit: {self.testName} Test Case: {test_case}")
+        return True
 
     def overrideBootReason(self, suite_name: str, boot_reason_index: int, boot_reason: str) -> bool:
         """
