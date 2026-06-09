@@ -88,6 +88,7 @@ class bootHelperClass(utHelperClass):
         if moduleName is None:
             # Only needed while running individual tests
             self.testCaseConfiguration = ConfigRead(BOOT_TESTCASES_CONFIGURATION_FILE, self.profile_moduleName)
+            self.testMenuConfiguration = ConfigRead(BOOT_TEST_MENU_CONFIGURATION_FILE, self.moduleName)
         else:
             # Unified test menu file (e.g. vts_l3_test_setup.yaml) uses moduleName key; boot-specific file uses "Boot"
             menuConfigKey = self.moduleName if testMenuConfigFile is not None else self.profile_moduleName
