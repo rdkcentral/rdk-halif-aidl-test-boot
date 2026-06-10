@@ -65,7 +65,7 @@ rackConfig:
                             ip: "127.0.0.1" #IP address
                             password: "root"
                             prompt: "~#" # Prompt string on console
-                        - ssh_hal_test:
+                        - ssh_hal_test_0:
                             type: "ssh"
                             port: 5522
                             username: "root"

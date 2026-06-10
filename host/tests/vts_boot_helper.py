@@ -96,7 +96,7 @@ class bootHelperClass(utHelperClass):
         self.testMenuConfiguration.test.execute = self.testMenuConfiguration.test.execute + f" -p {profileOnTarget}"
 
         # Establish HAL session
-        self.hal_session = self.dut.getConsoleSession("ssh_hal_test")
+        self.hal_session = self.dut.getConsoleSession("ssh_hal_test_0")
         self.hal_session_1 = self.dut.getConsoleSession("ssh_hal_test_1")
 
         # Initialize UT menu navigator and utilities
