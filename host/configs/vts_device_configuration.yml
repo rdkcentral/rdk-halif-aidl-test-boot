@@ -26,8 +26,8 @@ deviceConfig:
         model:      "VTV"
         soc_vendor: "appleM3"
         target_directory: "/tmp/"
-        boot_non_volatile_directory: "/tmp/"
-        boot_volatile_directory: "/home/root/"
+        boot_volatile_directory: "/tmp/"
+        boot_non_volatile_directory: "/home/root/"
         prompt: "~#" # Prompt string on console
         wait_time: 40 #Configurable timeout value to limit the total duration of individual tests
         test:

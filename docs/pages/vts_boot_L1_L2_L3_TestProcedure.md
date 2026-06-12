@@ -207,8 +207,8 @@ deviceConfig:
         model:      "xy" # User needs to update based on their soc
         soc_vendor: "xx" # User needs to update based on their soc
         target_directory: "/tmp/"
-        boot_non_volatile_directory: "/tmp/"  # User needs to update based on their soc
-        boot_volatile_directory: "/home/root/" # User needs to update based on their soc
+        boot_volatile_directory: "/tmp/"  # User needs to update based on their soc
+        boot_non_volatile_directory: "/home/root/" # User needs to update based on their soc
         prompt: "~#" # Prompt string on console
         wait_time: 40 # Configurable timeout value to limit the total duration of individual tests
         test:

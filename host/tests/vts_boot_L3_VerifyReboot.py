@@ -65,11 +65,11 @@ class  vts_boot_L3_VerifyReboot(bootHelperClass):
             
             # Define test parameters based on reset type
             if reset_type in ["MAINTENANCE_REBOOT", "SOFTWARE_REBOOT"]:
-                file_directory = self.volatileDirectoryOnDevice
+                file_directory = self.nonvolatileDirectoryOnDevice
                 file_should_persist = True
                 expected_boot_reason = "MAINTENANCE_REBOOT" if reset_type == "MAINTENANCE_REBOOT" else "WARM_RESET"
             elif reset_type == "FULL_SYSTEM_RESET":
-                file_directory = self.nonvolatileDirectoryOnDevice
+                file_directory = self.volatileDirectoryOnDevice
                 file_should_persist = False
                 expected_boot_reason = "WARM_RESET"
             else:
