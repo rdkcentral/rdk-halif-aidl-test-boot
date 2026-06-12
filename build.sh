@@ -31,7 +31,6 @@ declare -r TOP=`dirname $(realpath $0)`
 declare -r HALIF_VERSION=current
 RDK_HALIF_AIDL_VERSION="${RDK_HALIF_AIDL_VERSION="main"}"
 RDK_HALIF_TEST_BASE_URL="https://github.com/rdkcentral/rdk-halif-binder-test-"
-VCOMPONENT_BOOT_VERSION="${VCOMPONENT_BOOT_VERSION="main"}"
 OUT_TAR_FILE=vts-boot.tar.gz
 
 declare -A HALIF_COMPONENTS=(
@@ -40,7 +39,6 @@ declare -A HALIF_COMPONENTS=(
 
 # Define the directory where the repository will be cloned
 declare -r UT_CORE_DIR="${TOP}/ut-core"
-declare -r VCOMPONENT_DIR="${TOP}/vcomponent"
 declare -r TOP_BUILD_DIR="${TOP}/build"
 declare -r COMMON_DIR="${TOP}/common"
 declare -r BUILD_INSTALL_PREFIX=${TOP_BUILD_DIR}/usr
@@ -176,34 +174,6 @@ build_ut_core()
 }
 
 ###############################################################################
-# Function to Build vcomponent services
-###############################################################################
-build_vcomponent_services()
-{
-    if [ ! -d ${VCOMPONENT_DIR} ]; then
-        git clone git@github.com:rdkcentral/rdk-aidl-vcomponent-boot.git ${VCOMPONENT_DIR}
-        if [ $? -ne 0 ]; then
-            echo "Failed to clone the repository. Exiting."
-            exit 1
-        fi
-    fi
-
-    pushd ${VCOMPONENT_DIR}
-
-    git checkout ${VCOMPONENT_BOOT_VERSION}
-
-    make -j"$(nproc)" -C "${TOP}/vcomponent" BUILD_DIR="${TOP_BUILD_DIR}" UT_CORE_DIR="${UT_CORE_DIR}"
-    if [ $? -ne 0 ]; then
-        echo -e "${BOLD}╔════════════════════════════════════════════════╗${RESET}"
-        echo -e "${BOLD}* ${RED}Failed to build the vcomponent Service. Exiting.${RESET}"
-        echo -e "${BOLD}╚════════════════════════════════════════════════╝${RESET}"
-        exit 1
-    fi
-
-    popd
-}
-
-###############################################################################
 # Function to Build HALIF test
 ###############################################################################
 build_halif_test()
@@ -230,8 +200,6 @@ install_test()
     install -t ${INSTALL_PATH} run.sh
 
     cp -r ${PROFILES_DIR} ${INSTALL_PATH}
-    cp -r "${TOP}/vcomponent/vcomponent_configurations" ${INSTALL_PATH}
-    cp -r "${TOP}/vcomponent/boot_populate_controlPlane.sh" ${INSTALL_PATH}
     cp -r "${TOP}/test_configuration" ${INSTALL_PATH}
 
     cd ${INSTALL_PATH}
@@ -247,10 +215,8 @@ clean_test()
     echo -e "${BOLD}removing *.o${RESET}"
 
     rm -rf test/*.o
-    rm -rf ${TOP}/vcomponent/src/*.o
     rm -rf ${TOP}/src/*.o
     make -C ${AIDL_LIB_DIR} clean
-    make -C ${VCOMPONENT_DIR} clean
     make clean
 }
 
@@ -263,7 +229,6 @@ dist_clean_test()
     rm -rf $TOP_BUILD_DIR
     rm -rf $RDK_HAL_DIR
     rm -rf ${UT_CORE_DIR}
-    rm -rf ${VCOMPONENT_DIR}
 }
 
 ###############################################################################
@@ -303,7 +268,6 @@ elif [[ "$1" == target=* || "$1" == Target=* || "$1" == TARGET=* ]]; then
     build_aidl_libs
     build_ut_core
     build_halif_test
-    build_vcomponent_services
     install_test
     echo -e "${BOLD}╔════════════════════════════════╗${RESET}"
     echo -e "${BOLD}* ${GREEN}Build Successful${RESET}               ${BOLD}*${RESET}"

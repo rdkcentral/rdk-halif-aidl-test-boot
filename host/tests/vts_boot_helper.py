@@ -97,7 +97,6 @@ class bootHelperClass(utHelperClass):
 
         # Establish HAL session
         self.hal_session = self.dut.getConsoleSession("ssh_hal_test_0")
-        self.hal_session_1 = self.dut.getConsoleSession("ssh_hal_test_1")
 
         # Initialize UT menu navigator and utilities
         self.utMenu = UTSuiteNavigatorClass(self.testMenuConfiguration, None, self.hal_session)
@@ -122,29 +121,8 @@ class bootHelperClass(utHelperClass):
                 target_tarfile = target_tarfile.replace("\\", "/")
                 self.utilities.untar(self.hal_session, target_tarfile, self.targetWorkspace)
 
-        if moduleName is None:
-            # running individual tests
-            self.utilities.change_directory(self.hal_session_1, self.targetWorkspace)
-            self.hal_session_1.write(f"./{self.cpe.get('boot_process_name')} &")
-            time.sleep(2)
-        else:
-            # running unified tests - in this case we assume the boot process binary is already running on the target,
-            # since it is required for the unified test menu to function and we don't want to rely on user prompt
-            # during setup which can be problematic in automated runs. We will check if the boot process binary is
-            # already running, and if not, we will prompt the user to start it before proceeding with the tests.
-            actual_workspace = self.targetWorkspace
-            self.targetWorkspace = os.path.join(self.targetWorkspace, "/home/root/VTS")
-            bootProcessBinary = os.path.basename(self.cpe.get("boot_process_name"))
-            self.hal_session.write("ls " + self.targetWorkspace + "/" + bootProcessBinary + "\n")
-            res = self.hal_session.read_until(self.hal_session.prompt, timeout=5)
-            if "No such file or directory" not in res:
-                self.log.info(f"{bootProcessBinary} already exists on target, skipping user prompt and directly starting the boot process binary.")
-            else:
-                input(f"Please ensure the boot process binary is present in the target workspace {self.targetWorkspace}. Press Enter to continue...")
-            self.utilities.change_directory(self.hal_session_1, self.targetWorkspace)
-            self.hal_session_1.write(f"./{bootProcessBinary} &")
-            time.sleep(2)
-            self.targetWorkspace = actual_workspace + "/bin"# Restore original targetWorkspace value for unified tests
+        if moduleName is not None:
+            self.targetWorkspace = os.path.join(self.targetWorkspace, "bin").replace("\\", "/")
 
         # Initialize DUT Reboot Controller
         control_port = self.dut.getField("control_port") if self.platform == "vDevice" else None
