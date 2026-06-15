@@ -125,7 +125,9 @@ class bootHelperClass(utHelperClass):
             self.targetWorkspace = os.path.join(self.targetWorkspace, "bin").replace("\\", "/")
 
         # Initialize DUT Reboot Controller
-        control_port = self.dut.getField("control_port") if self.platform == "vDevice" else None
+        device_cfg = self.dut.rawConfig.get(self.dut.deviceName, {})
+        dut_reboot_cfg = device_cfg.get("dutRebootController")
+        control_port = dut_reboot_cfg.get("control_port") if dut_reboot_cfg else None
         self.dutRebootController = DutRebootController(
             log=self.log,
             platform=self.platform,
@@ -157,6 +159,8 @@ class bootHelperClass(utHelperClass):
         """
         self.hal_session = self.dut.getConsoleSession("default")
         self.utilities.change_directory(self.hal_session, self.targetWorkspace)
+        if self._moduleName is not None:
+            self.hal_session.write("ln -s /usr/lib/libavbuffer_helper.so.1.0.0 libavbufferhelper.so" + "\n") # Workaround for unified test case where UT binary expects libavbufferhelper.so in current directory
 
         # Trigger reboot with specified boot reason using the controller
         if not self.dutRebootController.triggerReboot(expectedBootReason):
@@ -234,6 +238,8 @@ class bootHelperClass(utHelperClass):
         self.utilities.change_directory(self.hal_session, self.targetWorkspace)
         self.testcase = "checkBootReason"
         self.hal_session = self.dut.getConsoleSession("default")
+        if self._moduleName is not None:
+            self.hal_session.write("ln -s /usr/lib/libavbuffer_helper.so.1.0.0 libavbufferhelper.so" + "\n") # Workaround for unified test case where UT binary expects libavbufferhelper.so in current directory
         self.utMenu.start()
 
         result = self.utMenu.select("VTS_L3_BOOT", self.testcase, None, self.waitTime, False)
@@ -265,6 +271,8 @@ class bootHelperClass(utHelperClass):
         """
         self.utilities.change_directory(self.hal_session, self.targetWorkspace)
         testcase = "overrideBootReason"
+        if self._moduleName is not None:
+            self.hal_session.write("ln -s /usr/lib/libavbuffer_helper.so.1.0.0 libavbufferhelper.so" + "\n") # Workaround for unified test case where UT binary expects libavbufferhelper.so in current directory
         self.utMenu.start()
         promptWithAnswers = [
             {    

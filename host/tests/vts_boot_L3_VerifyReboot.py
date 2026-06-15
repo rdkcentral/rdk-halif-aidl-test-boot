@@ -79,7 +79,7 @@ class  vts_boot_L3_VerifyReboot(bootHelperClass):
             
             # Create test file if needed
             if file_directory:
-                touchOutput = self.hal_session.write(f"touch {file_directory}{L3_TEST_CONFIG_FILE_NAME}")
+                touchOutput = self.hal_session.write(f"touch {file_directory}/{L3_TEST_CONFIG_FILE_NAME}")
                 if touchOutput is True:
                     self.log.step(f"File created before {reset_type} reboot...")
                 else:
