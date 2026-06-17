@@ -69,8 +69,8 @@ class bootHelperClass(utHelperClass):
 
         # Parse device configuration
         self.deviceTestSetup = self.cpe.get("test")
-        self.targetWorkspace = os.path.join(self.cpe.get("target_directory"), self.moduleName)
-        self.moduleHFPFile = os.path.join(dir_path, self.deviceTestSetup.get("profile"))
+        self.targetWorkspace = os.path.join(self.cpe.get("target_directory"), self.moduleName).replace("\\", "/")
+        self.moduleHFPFile = os.path.join(dir_path, self.deviceTestSetup.get("profile")).replace("\\", "/")
         self.nonvolatileDirectoryOnDevice = self.cpe.get("boot_non_volatile_directory")
         self.volatileDirectoryOnDevice = self.cpe.get("boot_volatile_directory")
         # Unified mode nests artifacts under "bin/"; individual mode does not.
@@ -108,7 +108,7 @@ class bootHelperClass(utHelperClass):
         # Copy required artifacts to target device
         self.utilities.change_directory(self.hal_session, self.targetWorkspace)
         for artifact in self.testMenuConfiguration.test.artifacts:
-            filesPath = os.path.join(artifactDirPath, artifact) if artifactDirPath is not None else os.path.join(dir_path, artifact)
+            filesPath = os.path.join(artifactDirPath, artifact).replace("\\", "/") if artifactDirPath is not None else os.path.join(dir_path, artifact).replace("\\", "/")
             self.hal_session.write("ls " + self.targetWorkspace + "/" + os.path.basename(artifact) + "\n")
             res = self.hal_session.read_until(self.hal_session.prompt, timeout=5)
             if "No such file or directory" not in res:
@@ -117,7 +117,7 @@ class bootHelperClass(utHelperClass):
 
             if tarfile.is_tarfile(filesPath):
                 self.utilities.change_directory(self.hal_session, self.targetWorkspace)
-                target_tarfile = os.path.join(self.targetWorkspace, os.path.basename(artifact))
+                target_tarfile = os.path.join(self.targetWorkspace, os.path.basename(artifact)).replace("\\", "/")
                 target_tarfile = target_tarfile.replace("\\", "/")
                 self.utilities.untar(self.hal_session, target_tarfile, self.targetWorkspace)
 
