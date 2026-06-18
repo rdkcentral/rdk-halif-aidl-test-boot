@@ -36,14 +36,14 @@ class  vts_boot_L3_VerifyReboot(bootHelperClass):
     """
     Runs L3 Set States test
     """
-    def __init__(self, log:logModule=None):
+    def __init__(self, log:logModule=None, testMenuConfigFile:str=None, moduleName:str=None, artifactDirPath:str=None):
         """
         Initializes the test class
         """
         self.testName = "BOOT_L3_Reboot"
         qcId = "3"
         
-        super().__init__(self.testName, qcId, log)
+        super().__init__(self.testName, qcId, log, testMenuConfigFile, moduleName, artifactDirPath)
 
 
     def fileExistsOnDevice(self, filePath, prompt=None, session=None):
@@ -65,11 +65,11 @@ class  vts_boot_L3_VerifyReboot(bootHelperClass):
             
             # Define test parameters based on reset type
             if reset_type in ["MAINTENANCE_REBOOT", "SOFTWARE_REBOOT"]:
-                file_directory = self.volatileDirectoryOnDevice
+                file_directory = self.nonvolatileDirectoryOnDevice
                 file_should_persist = True
                 expected_boot_reason = "MAINTENANCE_REBOOT" if reset_type == "MAINTENANCE_REBOOT" else "WARM_RESET"
             elif reset_type == "FULL_SYSTEM_RESET":
-                file_directory = self.nonvolatileDirectoryOnDevice
+                file_directory = self.volatileDirectoryOnDevice
                 file_should_persist = False
                 expected_boot_reason = "WARM_RESET"
             else:
@@ -79,7 +79,7 @@ class  vts_boot_L3_VerifyReboot(bootHelperClass):
             
             # Create test file if needed
             if file_directory:
-                touchOutput = self.hal_session.write(f"touch {file_directory}{L3_TEST_CONFIG_FILE_NAME}")
+                touchOutput = self.hal_session.write(f"touch {file_directory}/{L3_TEST_CONFIG_FILE_NAME}")
                 if touchOutput is True:
                     self.log.step(f"File created before {reset_type} reboot...")
                 else:
@@ -92,7 +92,7 @@ class  vts_boot_L3_VerifyReboot(bootHelperClass):
                 results = False
                 continue
 
-            super().__init__(self.testName, "3", self.log) #Reinitialize after reboot
+            super().__init__(self.testName, "3", self.log, self._testMenuConfigFile, self._moduleName, self._artifactDirPath) #Reinitialize after reboot
             
             # Check boot reason using modular function
             if not self.verifyBootReason(reset_type, expected_boot_reason):
@@ -102,7 +102,7 @@ class  vts_boot_L3_VerifyReboot(bootHelperClass):
             # Verify file persistence if applicable
             if file_directory:
 
-                fileCheckCommand = f"[ ! -e {file_directory}{L3_TEST_CONFIG_FILE_NAME} ] && echo 'FALSE' || echo 'TRUE'"
+                fileCheckCommand = f"[ ! -e {file_directory}/{L3_TEST_CONFIG_FILE_NAME} ] && echo 'FALSE' || echo 'TRUE'"
                 self.hal_session = self.dut.getConsoleSession("default")
                 self.hal_session.write(fileCheckCommand)
                 time.sleep(2)  # Wait for command to execute and output to be ready
@@ -128,7 +128,7 @@ class  vts_boot_L3_VerifyReboot(bootHelperClass):
 
                 # Clean up the file if it still exists
                 if file_exists:
-                    self.hal_session.write(f"rm {file_directory}{L3_TEST_CONFIG_FILE_NAME}")
+                    self.hal_session.write(f"rm {file_directory}/{L3_TEST_CONFIG_FILE_NAME}")
             else:
                 # For other reset types, just log success
                 self.log.stepResult(results, f"Test Suit: {self.testName} Test Case: {reset_type}")
@@ -139,3 +139,5 @@ if __name__ == '__main__':
     summaryLog = logModule(summaryLogName, level=logModule.INFO)
     test = vts_boot_L3_VerifyReboot(summaryLog )
     test.run(False)
+
+VTS_BOOT_L3_VerifyReboot = vts_boot_L3_VerifyReboot

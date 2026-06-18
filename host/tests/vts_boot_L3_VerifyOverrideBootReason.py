@@ -37,13 +37,13 @@ class vts_boot_L3_VerifyOverrideBootReason(bootHelperClass):
     - SOFTWARE_REBOOT preserves the override
     - Other reset types ignore the override
     """
-    def __init__(self, log:logModule=None):
+    def __init__(self, log:logModule=None, testMenuConfigFile:str=None, moduleName:str=None, artifactDirPath:str=None):
         """
         Initializes the test class
         """
         self.testName = "BOOT_L3_OverrideBootReason"
         qcId = "4"
-        super().__init__(self.testName, qcId, log)
+        super().__init__(self.testName, qcId, log, testMenuConfigFile, moduleName, artifactDirPath)
 
     def testOverrideWithResetType(self, boot_reason: str, reset_type: str, test_id: str) -> bool:
         """
@@ -98,7 +98,7 @@ class vts_boot_L3_VerifyOverrideBootReason(bootHelperClass):
             return False
         
         # Reinitialize after reboot
-        super().__init__(self.testName, "4", self.log)
+        super().__init__(self.testName, "4", self.log, self._testMenuConfigFile, self._moduleName, self._artifactDirPath)
         
         # Step 3: Verify boot reason
         return self.verifyBootReason(reset_type, expected_boot_reason, test_id)
@@ -169,3 +169,5 @@ if __name__ == '__main__':
     summaryLog = logModule(summaryLogName, level=logModule.INFO)
     test = vts_boot_L3_VerifyOverrideBootReason(summaryLog )
     test.run(False)
+
+VTS_BOOT_L3_VerifyOverrideBootReason = vts_boot_L3_VerifyOverrideBootReason
