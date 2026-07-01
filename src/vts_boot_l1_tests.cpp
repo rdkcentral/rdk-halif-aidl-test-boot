@@ -74,7 +74,7 @@
 #include "vts_boot.h"
 
 constexpr int INVALID_ENUM_TEST_VALUE = -999; // An invalid enum value to test negative cases
-extern android::sp<com::rdk::hal::boot::IBoot> gBOOTHandle;
+extern android::sp<com::rdk::hal::bootreason::IBootReason> gBOOTHandle;
 
 /* Test class registration with UT_Core */
 UT_ADD_TEST_TO_GROUP(VTS_L1_BOOT, UT_TESTS_L1)
@@ -119,9 +119,9 @@ public:
  */
 UT_ADD_TEST(VTS_L1_BOOT, getCapabilities_pos)
 {
-    android::sp<com::rdk::hal::boot::IBoot> bootHandle = gBOOTHandle;
+    android::sp<com::rdk::hal::bootreason::IBootReason> bootHandle = gBOOTHandle;
     UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
-    com::rdk::hal::boot::Capabilities capabilities;
+    com::rdk::hal::bootreason::Capabilities capabilities;
     BOOT_GETCAPABILITIES_SUCCESS(bootHandle, capabilities);
     const std::string baseKey = "boot/supportedResetTypes";
     UT_ASSERT_EQUAL(capabilities.supportedResetTypes.size(), UT_KVP_PROFILE_GET_LIST_COUNT(baseKey.c_str()));
@@ -149,14 +149,14 @@ UT_ADD_TEST(VTS_L1_BOOT, getCapabilities_pos)
     }
 
     const std::string baseKeyBootReasons = "boot/supportedBootReasons";
-    UT_ASSERT_EQUAL(capabilities.supportedBootReasons.size(), UT_KVP_PROFILE_GET_LIST_COUNT(baseKeyBootReasons.c_str()));
+    UT_ASSERT_EQUAL(capabilities.supportedBootCauses.size(), UT_KVP_PROFILE_GET_LIST_COUNT(baseKeyBootReasons.c_str()));
     found = false;
-    for (const auto &bootReason : capabilities.supportedBootReasons)
+    for (const auto &bootReason : capabilities.supportedBootCauses)
     {
         const std::string bootReasonStr = android::internal::ToString(bootReason);
         UT_LOG_DEBUG("Supported bootReasonStr: %s\n", bootReasonStr.c_str());
         std::string key;
-        for (int i = 0; i < (int)capabilities.supportedBootReasons.size(); i++)
+        for (int i = 0; i < (int)capabilities.supportedBootCauses.size(); i++)
         {
             key = baseKeyBootReasons + "/" + std::to_string(i);
             found = false;
@@ -194,10 +194,10 @@ UT_ADD_TEST(VTS_L1_BOOT, getCapabilities_pos)
  */
 UT_ADD_TEST(VTS_L1_BOOT, setBootReason_pos)
 {
-    android::sp<com::rdk::hal::boot::IBoot> bootHandle = gBOOTHandle;
+    android::sp<com::rdk::hal::bootreason::IBootReason> bootHandle = gBOOTHandle;
     UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
-    com::rdk::hal::boot::BootReason bootReasonToSet = com::rdk::hal::boot::BootReason::ERROR_UNKNOWN;
-    std::string reasonString = com::rdk::hal::boot::toString(bootReasonToSet);
+    com::rdk::hal::bootreason::BootCause bootReasonToSet = com::rdk::hal::bootreason::BootCause::ERROR_UNKNOWN;
+    std::string reasonString = com::rdk::hal::bootreason::toString(bootReasonToSet);
     BOOT_SETBOOTREASON_SUCCESS(bootHandle, bootReasonToSet, reasonString);
 }
 
@@ -222,16 +222,16 @@ UT_ADD_TEST(VTS_L1_BOOT, setBootReason_pos)
  */
 UT_ADD_TEST(VTS_L1_BOOT, setBootReason_neg)
 {
-    android::sp<com::rdk::hal::boot::IBoot> bootHandle = gBOOTHandle;
+    android::sp<com::rdk::hal::bootreason::IBootReason> bootHandle = gBOOTHandle;
     UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
 
     // Using an unsupported boot reason to test negative case
-    com::rdk::hal::boot::BootReason invalidBootReason = static_cast<com::rdk::hal::boot::BootReason>(INVALID_ENUM_TEST_VALUE);
-    std::string reasonString = com::rdk::hal::boot::toString(invalidBootReason);
+    com::rdk::hal::bootreason::BootCause invalidBootReason = static_cast<com::rdk::hal::bootreason::BootCause>(INVALID_ENUM_TEST_VALUE);
+    std::string reasonString = com::rdk::hal::bootreason::toString(invalidBootReason);
     BOOT_SETBOOTREASON_FAILURE(bootHandle, invalidBootReason, reasonString.c_str(), ::android::binder::Status::EX_ILLEGAL_ARGUMENT);
 
     //Using empty reason string to test negative case
-    BOOT_SETBOOTREASON_FAILURE(bootHandle, com::rdk::hal::boot::BootReason::ERROR_UNKNOWN, "", ::android::binder::Status::EX_ILLEGAL_ARGUMENT);
+    BOOT_SETBOOTREASON_FAILURE(bootHandle, com::rdk::hal::bootreason::BootCause::ERROR_UNKNOWN, "", ::android::binder::Status::EX_ILLEGAL_ARGUMENT);
 }
 
 /**
@@ -255,25 +255,25 @@ UT_ADD_TEST(VTS_L1_BOOT, setBootReason_neg)
  */
 UT_ADD_TEST(VTS_L1_BOOT, getBootReason_pos)
 {
-    android::sp<com::rdk::hal::boot::IBoot> bootHandle = gBOOTHandle;
+    android::sp<com::rdk::hal::bootreason::IBootReason> bootHandle = gBOOTHandle;
     UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
-    com::rdk::hal::boot::BootReason bootReason;
+    com::rdk::hal::bootreason::BootCause bootReason;
     BOOT_GETBOOTREASON_SUCCESS(bootHandle, bootReason);
 
     // Validate that the returned boot reason is among the supported boot reasons in capabilities
-    com::rdk::hal::boot::Capabilities capabilities;
+    com::rdk::hal::bootreason::Capabilities capabilities;
     bool reasonMatched = false;
     BOOT_GETCAPABILITIES_SUCCESS(bootHandle, capabilities);
-    for(const auto &reason : capabilities.supportedBootReasons)
+    for(const auto &reason : capabilities.supportedBootCauses)
     {
         if(bootReason == reason)
         {
-            UT_PASS("Boot reason from getBootReason() is among supported boot reasons in capabilities");
+            UT_PASS("Boot reason from getBootCause() is among supported boot causes in capabilities");
             reasonMatched = true;
             break;
         }
     }
-    UT_ASSERT_TRUE(reasonMatched); // Validate that the returned boot reason is among supported boot reasons in capabilities
+    UT_ASSERT_TRUE(reasonMatched); // Validate that the returned boot reason is among supported boot causes in capabilities
 }
 
 /**
@@ -297,15 +297,15 @@ UT_ADD_TEST(VTS_L1_BOOT, getBootReason_pos)
  */
 UT_ADD_TEST(VTS_L1_BOOT, reboot_neg)
 {
-    android::sp<com::rdk::hal::boot::IBoot> bootHandle = gBOOTHandle;
+    android::sp<com::rdk::hal::bootreason::IBootReason> bootHandle = gBOOTHandle;
     UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
     // Using an unsupported reset type to test negative case
-    com::rdk::hal::boot::ResetType invalidResetType = static_cast<com::rdk::hal::boot::ResetType>(-999);
+    com::rdk::hal::bootreason::ResetType invalidResetType = static_cast<com::rdk::hal::bootreason::ResetType>(-999);
     ::android::String16 reasonString = android::String16("invalidResetType");
     BOOT_REBOOT_FAILURE(bootHandle, invalidResetType, reasonString, ::android::binder::Status::EX_ILLEGAL_ARGUMENT);
 
     // Using empty reason string to test negative case
-    BOOT_REBOOT_FAILURE(bootHandle, com::rdk::hal::boot::ResetType::FULL_SYSTEM_RESET, android::String16(""), ::android::binder::Status::EX_ILLEGAL_ARGUMENT);
+    BOOT_REBOOT_FAILURE(bootHandle, com::rdk::hal::bootreason::ResetType::FULL_SYSTEM_RESET, android::String16(""), ::android::binder::Status::EX_ILLEGAL_ARGUMENT);
 }
 
 /**
@@ -329,9 +329,9 @@ UT_ADD_TEST(VTS_L1_BOOT, reboot_neg)
  */
 UT_ADD_TEST(VTS_L1_BOOT, getPowerSource_pos)
 {
-    android::sp<com::rdk::hal::boot::IBoot> bootHandle = gBOOTHandle;
+    android::sp<com::rdk::hal::bootreason::IBootReason> bootHandle = gBOOTHandle;
     UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
-    com::rdk::hal::boot::PowerSource powerSource;
+    com::rdk::hal::bootreason::PowerSource powerSource;
     BOOT_GETPOWERSOURCE_SUCCESS(bootHandle, powerSource);
 
     // Validate that the returned power source matches the supported power sources in profile
