@@ -138,7 +138,31 @@ install_halif_headers()
 }
 
 ###############################################################################
-# Function to resolve versioned src/include dirs from rdk-halif-aidl metadata
+# Function to resolve versioned src/include dirs from rdk-halif-aidl
+#
+# Version resolution order:
+#   1. versions_released.yaml  (rdk-halif-aidl/versions_released.yaml)
+#      The cohort-locked build manifest.  Each component listed under the
+#      `components:` map is pinned to a specific released snapshot, e.g.:
+#
+#          default: current
+#          components:
+#            bootreason: 0.1.0.0
+#            firmwareupdate: 0.2.0.0
+#            ...
+#
+#   2. Fallback — if a component is absent from the `components:` map the
+#      `default:` value from the same file is used (typically "current").
+#
+# For each component in HALIF_COMPONENTS the resolved version is used to
+# locate pre-generated C++ sources and headers at:
+#   <RDK_HAL_DIR>/<component>/<version>/src/
+#   <RDK_HAL_DIR>/<component>/<version>/include/
+#
+# Sets (for each component, last writer wins when HALIF_COMPONENTS has
+# multiple entries):
+#   HALIF_AIDL_SRC_DIR  – absolute path to the versioned src/ directory
+#   HALIF_AIDL_INC_DIR  – absolute path to the versioned include/ directory
 ###############################################################################
 resolve_halif_versions()
 {
@@ -154,18 +178,27 @@ resolve_halif_versions()
         fi
     fi
 
-    for component in "${!HALIF_COMPONENTS[@]}"; do
-        local metadata="${RDK_HAL_DIR}/${component}/metadata.yaml"
-        if [ ! -f "$metadata" ]; then
-            echo -e "${BOLD}${RED}ERROR: metadata.yaml not found: ${metadata}${RESET}"
-            exit 1
-        fi
+    local versions_file="${RDK_HAL_DIR}/versions_released.yaml"
+    if [ ! -f "$versions_file" ]; then
+        echo -e "${BOLD}${RED}ERROR: versions_released.yaml not found: ${versions_file}${RESET}"
+        exit 1
+    fi
 
+    # Read the fallback version from the `default:` key
+    local default_version
+    default_version=$(grep -m1 '^default:' "$versions_file" | awk '{print $2}')
+    if [ -z "$default_version" ]; then
+        default_version="current"
+    fi
+
+    for component in "${!HALIF_COMPONENTS[@]}"; do
+        # Look up the component in the `components:` map.
+        # Entry format (with leading whitespace): "  <component>: <version>"
         local version
-        version=$(grep -m1 '^version:' "$metadata" | awk '{print $2}')
+        version=$(grep -m1 "^[[:space:]]*${component}:" "$versions_file" | awk '{print $2}')
         if [ -z "$version" ]; then
-            echo -e "${BOLD}${RED}ERROR: Could not parse version from ${metadata}${RESET}"
-            exit 1
+            echo -e "${BOLD}${YELLOW}WARNING: ${component} not listed in versions_released.yaml, using default: ${default_version}${RESET}"
+            version="$default_version"
         fi
 
         local src_dir="${RDK_HAL_DIR}/${component}/${version}/src"
@@ -180,7 +213,7 @@ resolve_halif_versions()
             exit 1
         fi
 
-        echo -e "${BOLD}${GREEN}${component}${RESET}: version=${YELLOW}${version}${RESET}"
+        echo -e "${BOLD}${GREEN}${component}${RESET}: version=${YELLOW}${version}${RESET} ${CYAN}(versions_released.yaml)${RESET}"
         HALIF_AIDL_SRC_DIR=$(realpath "$src_dir")
         HALIF_AIDL_INC_DIR=$(realpath "$inc_dir")
     done

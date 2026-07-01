@@ -218,6 +218,7 @@ UT_ADD_TEST(VTS_L1_BOOT, setBootReason_pos)
  * | 3    | Convert invalid boot reason to string           | toString(invalidBootReason)                             | reasonString populated                             |                                            |
  * | 4    | Call BOOT_SETBOOTREASON_FAILURE                 | bootHandle, invalidBootReason, reasonString             | EX_ILLEGAL_ARGUMENT returned                       | Unsupported boot reason rejected           |
  * | 5    | Call BOOT_SETBOOTREASON_FAILURE with empty string | bootHandle, ERROR_UNKNOWN, ""                           | EX_ILLEGAL_ARGUMENT returned                       | Empty reason string rejected               |
+ * | 6    | Call BOOT_SETBOOTREASON_FAILURE with >64 byte string | bootHandle, ERROR_UNKNOWN, 65-char string           | EX_ILLEGAL_ARGUMENT returned                       | causeString exceeding 64 bytes rejected    |
  *
  */
 UT_ADD_TEST(VTS_L1_BOOT, setBootReason_neg)
@@ -230,8 +231,12 @@ UT_ADD_TEST(VTS_L1_BOOT, setBootReason_neg)
     std::string reasonString = com::rdk::hal::bootreason::toString(invalidBootReason);
     BOOT_SETBOOTREASON_FAILURE(bootHandle, invalidBootReason, reasonString.c_str(), ::android::binder::Status::EX_ILLEGAL_ARGUMENT);
 
-    //Using empty reason string to test negative case
+    // Using empty reason string to test negative case
     BOOT_SETBOOTREASON_FAILURE(bootHandle, com::rdk::hal::bootreason::BootCause::ERROR_UNKNOWN, "", ::android::binder::Status::EX_ILLEGAL_ARGUMENT);
+
+    // Using a causeString exceeding the 64-byte limit to test negative case
+    std::string longReasonString(65, 'a'); // 65 characters, one byte beyond the 64-byte limit
+    BOOT_SETBOOTREASON_FAILURE(bootHandle, com::rdk::hal::bootreason::BootCause::ERROR_UNKNOWN, longReasonString.c_str(), ::android::binder::Status::EX_ILLEGAL_ARGUMENT);
 }
 
 /**
@@ -293,6 +298,7 @@ UT_ADD_TEST(VTS_L1_BOOT, getBootReason_pos)
  * | 3    | Create reason string                            | reasonString = "invalidResetType"                       | reasonString populated                             |                                            |
  * | 4    | Call BOOT_REBOOT_FAILURE                        | bootHandle, invalidResetType, reasonString              | EX_ILLEGAL_ARGUMENT returned                       | Unsupported reset type rejected            |
  * | 5    | Call BOOT_REBOOT_FAILURE with empty string      | bootHandle, FULL_SYSTEM_RESET, ""                       | EX_ILLEGAL_ARGUMENT returned                       | Empty reason string rejected               |
+ * | 6    | Call BOOT_REBOOT_FAILURE with >64 byte string   | bootHandle, FULL_SYSTEM_RESET, 65-char string           | EX_ILLEGAL_ARGUMENT returned                       | causeString exceeding 64 bytes rejected    |
  *
  */
 UT_ADD_TEST(VTS_L1_BOOT, reboot_neg)
@@ -306,6 +312,10 @@ UT_ADD_TEST(VTS_L1_BOOT, reboot_neg)
 
     // Using empty reason string to test negative case
     BOOT_REBOOT_FAILURE(bootHandle, com::rdk::hal::bootreason::ResetType::FULL_SYSTEM_RESET, android::String16(""), ::android::binder::Status::EX_ILLEGAL_ARGUMENT);
+
+    // Using a causeString exceeding the 64-byte limit to test negative case
+    std::string longReasonStr(65, 'a'); // 65 characters, one byte beyond the 64-byte limit
+    BOOT_REBOOT_FAILURE(bootHandle, com::rdk::hal::bootreason::ResetType::FULL_SYSTEM_RESET, android::String16(longReasonStr.c_str()), ::android::binder::Status::EX_ILLEGAL_ARGUMENT);
 }
 
 /**
