@@ -17,9 +17,9 @@
 #*  limitations under the License.
 #*
 #* ******************************************************************************
-Boot:
+BootReason:
   L3:
-    BootReason: # The list of valid boot reasons from BootReason.h for testing
+    BootCause: # The list of valid boot causes from BootCause.aidl for testing
       - WATCHDOG
       - MAINTENANCE_REBOOT
       - THERMAL_RESET

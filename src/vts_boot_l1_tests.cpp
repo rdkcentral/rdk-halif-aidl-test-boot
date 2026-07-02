@@ -113,7 +113,7 @@ public:
  * | 2    | Call BOOT_GETCAPABILITIES_SUCCESS               | bootHandle, capabilities                                | capabilities structure is populated                |                                            |
  * | 3    | Compare supportedResetTypes count               | capabilities.supportedResetTypes, UT_KVP_PROFILE_GET_LIST_COUNT | Counts are equal                                   |                                            |
  * | 4    | For each reset type, validate against profile   | resetTypes, ut_kvp_getStringField                       | Each reset type is present in the profile          | Checks each supported reset type           |
- * | 5    | Compare supportedBootReasons count              | capabilities.supportedBootReasons, UT_KVP_PROFILE_GET_LIST_COUNT | Counts are equal                                   |                                            |
+ * | 5    | Compare supportedBootCauses count               | capabilities.supportedBootCauses, UT_KVP_PROFILE_GET_LIST_COUNT | Counts are equal                                   |                                            |
  * | 6    | For each boot reason, validate against profile  | bootReason, ut_kvp_getStringField                       | Each boot reason is present in the profile         | Checks each supported boot reason          |
  *
  */
@@ -123,7 +123,7 @@ UT_ADD_TEST(VTS_L1_BOOT, getCapabilities_pos)
     UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
     com::rdk::hal::bootreason::Capabilities capabilities;
     BOOT_GETCAPABILITIES_SUCCESS(bootHandle, capabilities);
-    const std::string baseKey = "boot/supportedResetTypes";
+    const std::string baseKey = "bootreason/supportedResetTypes";
     UT_ASSERT_EQUAL(capabilities.supportedResetTypes.size(), UT_KVP_PROFILE_GET_LIST_COUNT(baseKey.c_str()));
     bool found = false;
     for (const auto &resetTypes : capabilities.supportedResetTypes)
@@ -148,7 +148,7 @@ UT_ADD_TEST(VTS_L1_BOOT, getCapabilities_pos)
         UT_ASSERT_TRUE(found); // Validate that each reset type from capabilities is present in profile
     }
 
-    const std::string baseKeyBootReasons = "boot/supportedBootReasons";
+    const std::string baseKeyBootReasons = "bootreason/supportedBootCauses";
     UT_ASSERT_EQUAL(capabilities.supportedBootCauses.size(), UT_KVP_PROFILE_GET_LIST_COUNT(baseKeyBootReasons.c_str()));
     found = false;
     for (const auto &bootReason : capabilities.supportedBootCauses)
@@ -255,7 +255,7 @@ UT_ADD_TEST(VTS_L1_BOOT, setBootReason_neg)
  * | 1    | Obtain boot handle                              | gBOOTHandle                                             | bootHandle is not nullptr                          |                                            |
  * | 2    | Call BOOT_GETBOOTREASON_SUCCESS                 | bootHandle, bootReason                                  | bootReason is populated                            |                                            |
  * | 3    | Call BOOT_GETCAPABILITIES_SUCCESS               | bootHandle, capabilities                                | capabilities structure is populated                |                                            |
- * | 4    | Validate boot reason against capabilities       | bootReason, capabilities.supportedBootReasons           | bootReason matches one of supported reasons        | Ensures returned reason is valid           |
+ * | 4    | Validate boot reason against capabilities       | bootReason, capabilities.supportedBootCauses            | bootReason matches one of supported reasons        | Ensures returned reason is valid           |
  *
  */
 UT_ADD_TEST(VTS_L1_BOOT, getBootReason_pos)
@@ -333,7 +333,7 @@ UT_ADD_TEST(VTS_L1_BOOT, reboot_neg)
  * |------|-------------------------------------------------|---------------------------------------------------------|----------------------------------------------------|-----------------------------------------|
  * | 1    | Obtain boot handle                              | gBOOTHandle                                             | bootHandle is not nullptr                          |                                            |
  * | 2    | Call BOOT_GETPOWERSOURCE_SUCCESS                | bootHandle, powerSource                                 | powerSource is populated                           |                                            |
- * | 3    | Get power source from profile                   | ut_kvp_getStringField("boot/powerSource")               | Profile value retrieved successfully               |                                            |
+ * | 3    | Get power source from profile                   | ut_kvp_getStringField("bootreason/powerSource")          | Profile value retrieved successfully               |                                            |
  * | 4    | Validate power source against profile           | toString(powerSource), profile value                    | Power source matches profile configuration         | Ensures returned value matches config      |
  *
  */
@@ -345,7 +345,7 @@ UT_ADD_TEST(VTS_L1_BOOT, getPowerSource_pos)
     BOOT_GETPOWERSOURCE_SUCCESS(bootHandle, powerSource);
 
     // Validate that the returned power source matches the supported power sources in profile
-    const std::string baseKey = "boot/powerSource";
+    const std::string baseKey = "bootreason/powerSource";
     char value[UT_KVP_MAX_ELEMENT_SIZE] = {0};
     if (ut_kvp_getStringField(ut_kvp_profile_getInstance(), baseKey.c_str(), value, sizeof(value)) == UT_KVP_STATUS_SUCCESS)
     {

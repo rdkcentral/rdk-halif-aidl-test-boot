@@ -92,4 +92,4 @@ rackConfig:
                         username: "" # Needs to be filled out with login username
                         password: '' # Needs to be filled out with login password
                         port: 5522
-                        control_port: 9081
+                        control_port: 9072
