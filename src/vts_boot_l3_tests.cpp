@@ -209,7 +209,7 @@ UT_ADD_TEST(VTS_L3_BOOT, checkBootReason)
     ut_kvp_instance_t *kvpInstance = nullptr;
     BOOT_KVP_CREATE_INSTANCE(kvpInstance, BOOT_L3_TEST_CONFIG_FILE);
     UT_ASSERT_NOT_EQUAL(kvpInstance, nullptr);
-    const std::string baseKey = "Boot/L3/ValidateBootReason";
+    const std::string baseKey = "BootReason/L3/ValidateBootReason";
     char value[UT_KVP_MAX_ELEMENT_SIZE] = {0};
     if (ut_kvp_getStringField(kvpInstance, baseKey.c_str(), value, sizeof(value)) == UT_KVP_STATUS_SUCCESS)
     {

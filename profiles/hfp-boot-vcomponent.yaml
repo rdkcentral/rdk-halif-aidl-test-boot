@@ -18,15 +18,15 @@
 #*
 #* ******************************************************************************
 
-boot:
-  supportedBootReasons:
-    - ERROR_UNKNOWN           # Boot Reason is unknown
-    - WATCHDOG                # Boot Reason is due to Watchdog Timer
-    - MAINTENANCE_REBOOT      # Boot Reason is due to Maintenance Reboot
-    - THERMAL_RESET           # Boot Reason is due to Thermal Reset (overheating)
-    - WARM_RESET              # Boot Reason is due to Software Reboot
-    - COLD_BOOT               # Boot Reason is due to Cold Boot (power cycle)
-    - STR_AUTH_FAILURE        # Boot Reason is due to Suspend to RAM Authentication Failure
+bootreason:
+  supportedBootCauses:
+    - ERROR_UNKNOWN           # BootCause is unknown
+    - WATCHDOG                # BootCause is due to Watchdog Timer
+    - MAINTENANCE_REBOOT      # BootCause is due to Maintenance Reboot
+    - THERMAL_RESET           # BootCause is due to Thermal Reset (overheating)
+    - WARM_RESET              # BootCause is due to Software Reboot
+    - COLD_BOOT               # BootCause is due to Cold Boot (power cycle)
+    - STR_AUTH_FAILURE        # BootCause is due to Suspend to RAM Authentication Failure
   # Supported reset types (from ResetType.aidl), caller should also set the `reasonString`
   supportedResetTypes:
     - FULL_SYSTEM_RESET               # Delete all persistent data partitions and recreate them

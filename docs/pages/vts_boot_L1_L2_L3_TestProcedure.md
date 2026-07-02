@@ -25,22 +25,6 @@
 
 ## Build the VTS
 
-### Build Linux binder
-
-The test suite depends on the Linux binder with `AIDL` support. Follow these steps to build it:
-
-For detailed build instructions, please refer to [Linux Binder](https://github.com/rdkcentral/linux_binder_idl/tree/1.0.0)
-
-Here are the simplest steps outlined:
-
-```bash
-git clone -b develop 'https://github.com/rdkcentral/linux_binder_idl.git'
-
-cd linux_binder_idl
-
-./build-linux-binder-aidl.sh 64
-```
-
 ### Build VTS binaries
 
 Clone and build the test suite:
@@ -53,26 +37,20 @@ git clone git@github.com:rdkcentral/rdk-halif-aidl-test-boot.git
 cd rdk-halif-aidl-test-boot
 ```
 
-Set the following environment variables:
+The Binder SDK is built automatically by `build.sh` via `rdk-halif-aidl/build_binder.sh` — no external binder setup is required.
 
-- AIDL_BIN: Path to the `AIDL` compiler (e.g., /path/to/linux_binder_idl/out/aidl).
+The following environment variables are optional:
 
-- LINUX_BINDER_OUT_DIR: Path to the Linux binder output directory (e.g., /path/to/linux_binder_idl/local).
+- `UT_CORE_VERSION`: Specific version of the UT-Core framework (e.g., `5.0.0`). Defaults to the latest tagged version.
 
-- UT_CORE_VERSION: Specific version of the UT-Core framework (e.g., 4.7.0). Defaults to the latest tagged version.
-
-- RDK_HALIF_AIDL_VERSION: Specific version of the AIDL HAL Specification (e.g., 0.12.0). Defaults to the latest HEAD.
+- `RDK_HALIF_AIDL_VERSION`: Branch, tag, or commit of `rdk-halif-aidl` to clone (e.g., `0.21.0`). Defaults to `main`. Component versions within it are resolved from `versions_released.yaml`.
 
 Example:
 
 ```bash
 export UT_CORE_VERSION=5.0.0
-export RDK_HALIF_AIDL_VERSION=0.15.0
-export AIDL_BIN=/path/to/linux_binder_idl/out/aidl
-export LINUX_BINDER_OUT_DIR=/path/to/linux_binder_idl/local/
+export RDK_HALIF_AIDL_VERSION=0.21.0
 ```
-
-Note : This build has been compiled and reviewed against AIDL version 0.15.0.
 
 By default, `UT` logs are disabled. To enable them, set the following environment variable:
 
@@ -91,6 +69,8 @@ Run the build script:
 The build.sh script:
 
 - Clones the `rdk-halif-aidl` repository and UT-Core framework.
+- Resolves component versions from `rdk-halif-aidl/versions_released.yaml`.
+- Builds the Binder SDK automatically via `rdk-halif-aidl/build_binder.sh`.
 - Compiles the test suite.
 - Generates binaries in the `build/bin` directory.
 - Generates tar file `vts-boot.tar.gz` in the `build/bin` directory.
@@ -304,14 +284,14 @@ boot:
     reason: "<BOOT_REASON>"
 ```
 
-**Supported Boot Reasons:**
+**Supported Boot Causes:**
 - `WATCHDOG` - Watchdog timer expiration
 - `MAINTENANCE_REBOOT` - Scheduled maintenance reboot
 - `THERMAL_RESET` - Thermal event (overheating)
 - `WARM_RESET` - Software-initiated warm reboot
 - `COLD_BOOT` - Power-on from off state
 - `STR_AUTH_FAILURE` - Suspend-to-RAM authentication failure
-- `ERROR_UNKNOWN` - Unknown or undetermined boot reason
+- `ERROR_UNKNOWN` - Unknown or undetermined boot cause
 
 **Configuration:**
 The UT-Controller port is specified in the rack configuration file:

@@ -55,8 +55,8 @@ class bootHelperClass(utHelperClass):
             self.moduleName = moduleName
         else:
             # Individual test case
-            self.moduleName = "Boot"
-        self.profile_moduleName = "Boot"
+            self.moduleName = "BootReason"
+        self.profile_moduleName = "BootReason"
         self._moduleName = moduleName        # original param: None (standalone) or "VTS" (unified)
         self._testMenuConfigFile = testMenuConfigFile
         self._artifactDirPath = artifactDirPath
@@ -161,6 +161,8 @@ class bootHelperClass(utHelperClass):
         self.utilities.change_directory(self.hal_session, self.targetWorkspace)
         if self._moduleName is not None:
             self.hal_session.write("ln -s /usr/lib/libavbuffer_helper.so.1.0.0 libavbufferhelper.so" + "\n") # Workaround for unified test case where UT binary expects libavbufferhelper.so in current directory
+        else:
+            self.ensureVendorBootRunning() # Workaround for individual test case where Vendor-Boot service may not be running
 
         # Trigger reboot with specified boot reason using the controller
         if not self.dutRebootController.triggerReboot(expectedBootReason):
@@ -240,6 +242,8 @@ class bootHelperClass(utHelperClass):
         self.hal_session = self.dut.getConsoleSession("default")
         if self._moduleName is not None:
             self.hal_session.write("ln -s /usr/lib/libavbuffer_helper.so.1.0.0 libavbufferhelper.so" + "\n") # Workaround for unified test case where UT binary expects libavbufferhelper.so in current directory
+        else:
+            self.ensureVendorBootRunning() # Workaround for individual test case where Vendor-Boot service may not be running
         self.utMenu.start()
 
         result = self.utMenu.select("VTS_L3_BOOT", self.testcase, None, self.waitTime, False)
@@ -273,6 +277,8 @@ class bootHelperClass(utHelperClass):
         testcase = "overrideBootReason"
         if self._moduleName is not None:
             self.hal_session.write("ln -s /usr/lib/libavbuffer_helper.so.1.0.0 libavbufferhelper.so" + "\n") # Workaround for unified test case where UT binary expects libavbufferhelper.so in current directory
+        else:
+            self.ensureVendorBootRunning() # Workaround for individual test case where Vendor-Boot service may not be running
         self.utMenu.start()
         promptWithAnswers = [
             {    
@@ -298,6 +304,39 @@ class bootHelperClass(utHelperClass):
                 self.log.info(f"{file} removed successfully")
             else:
                 self.log.error(f"Unable to remove {file}")
+
+    def ensureVendorBootRunning(self) -> bool:
+        """
+        Verifies that the Vendor-Boot service is running on the DUT.
+
+        Executes ``ps | grep boot`` on the target device and checks whether a
+        ``Vendor-Boot`` process is listed in the output.  If the process is not
+        found it is started in the background from the current target workspace
+        before returning.
+        NOTE : this is a workaround for the fact that the Vendor-Boot service is not automatically started on some platforms.
+
+        Returns:
+            bool: True if the service was already running or has been started
+                  successfully.
+        """
+        self.log.info("Checking if Vendor-Boot service is running on the DUT...")
+        self.hal_session.write("ps | grep -i boot\n")
+        output = self.hal_session.read_until(self.hal_session.prompt, timeout=10)
+        self.log.info(f"ps | grep -i boot output:\n{output}")
+
+        if "Vendor-Boot" in output:
+            self.log.info("Vendor-Boot service is already running.")
+            return True
+
+        self.log.info("Vendor-Boot process not found...starting Vendor-Boot service in the background.")
+        self.utilities.change_directory(self.hal_session, "/home/root/BOOT")
+        self.hal_session.write("./Vendor-Boot -c vcomponent_configurations/boot_vcomponent_configuration.yaml &\n")
+        time.sleep(2)  # Allow the process time to initialise before proceeding
+        output = self.hal_session.read_until(self.hal_session.prompt, timeout=10)
+        self.log.info(f"Vendor-Boot start command output:\n{output}")
+        self.log.info("Vendor-Boot service started.")
+        self.utilities.change_directory(self.hal_session, self.targetWorkspace)
+        return True
 
     def parseFileCheckLog(self, log: str) -> bool:
         """

@@ -17,7 +17,7 @@
 #*  limitations under the License.
 #*
 #* ******************************************************************************
-Boot:
+BootReason:
   description: "Boot L1 and L2 test setup"
   restart_required: False
   test_suites: # List of L1 and L2 test suites
