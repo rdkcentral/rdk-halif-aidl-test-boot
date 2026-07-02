@@ -51,7 +51,7 @@ class vts_boot_L3_VerifyBootReasonExternalCause(bootHelperClass):
             bool: Final result of the test.
         """
         totatlResult = True
-        for bootReason in self.l3TestConfig.L3.BootReason:
+        for bootReason in self.l3TestConfig.L3.BootCause:
             bootReasonExpected = bootReason
             self.log.stepStart(f"Starting test for boot reason: {bootReasonExpected}")
             boot_result = self.externallyTriggeredReboot(expectedBootReason=bootReasonExpected)

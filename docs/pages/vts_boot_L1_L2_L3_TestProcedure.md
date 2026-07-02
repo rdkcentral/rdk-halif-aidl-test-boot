@@ -41,15 +41,16 @@ The Binder SDK is built automatically by `build.sh` via `rdk-halif-aidl/build_bi
 
 The following environment variables are optional:
 
-- `UT_CORE_VERSION`: Specific version of the UT-Core framework (e.g., `5.0.0`). Defaults to the latest tagged version.
+- `UT_CORE_VERSION`: Specific version of the UT-Core framework (e.g., `5.0.0`). Defaults to `5.1.0`.
 
 - `RDK_HALIF_AIDL_VERSION`: Branch, tag, or commit of `rdk-halif-aidl` to clone (e.g., `0.21.0`). Defaults to `main`. Component versions within it are resolved from `versions_released.yaml`.
 
 Example:
 
 ```bash
-export UT_CORE_VERSION=5.0.0
-export RDK_HALIF_AIDL_VERSION=0.21.0
+export UT_CORE_VERSION=5.1.0
+export RDK_HALIF_AIDL_VERSION=develop
+export UT_LOG_LEVEL=4
 ```
 
 By default, `UT` logs are disabled. To enable them, set the following environment variable:
@@ -69,8 +70,9 @@ Run the build script:
 The build.sh script:
 
 - Clones the `rdk-halif-aidl` repository and UT-Core framework.
-- Resolves component versions from `rdk-halif-aidl/versions_released.yaml`.
-- Builds the Binder SDK automatically via `rdk-halif-aidl/build_binder.sh`.
+- Builds the Binder SDK via `rdk-halif-aidl/build_binder.sh`.
+- Resolves the `bootreason` component version from `rdk-halif-aidl/versions_released.yaml` and builds it into a versioned shared library (`libbootreason-v<version>-cpp.so`) via `rdk-halif-aidl/build_modules.sh bootreason`.
+- Creates unversioned softlinks (`lib<module>-cpp.so → lib<module>-v<version>-cpp.so`) and writes `halif_generated.mk` used by the Makefile.
 - Compiles the test suite.
 - Generates binaries in the `build/bin` directory.
 - Generates tar file `vts-boot.tar.gz` in the `build/bin` directory.

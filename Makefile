@@ -70,20 +70,37 @@ endif
 SRC_DIRS := $(BOOT_TEST_DIR)
 SRC_DIRS += $(ROOT_DIR)/test
 
-INC_DIRS := $(ROOT_DIR)/build/usr/include
-INC_DIRS += $(SRC_DIRS)
+# HAL interface headers and libraries from rdk-halif-aidl versioned snapshot build.
+# build_modules.sh manifest produces:
+#   out/target/lib/halif/lib<module>-v<version>-cpp.so  (versioned .so)
+#   out/build/include/<module>/<version>/include/        (staged headers)
+# build.sh create_halif_softlinks() adds:
+#   out/target/lib/halif/lib<module>-cpp.so -> lib<module>-v<version>-cpp.so
+# and writes halif_generated.mk with HALIF_INC_DIRS and HALIF_MODULE_LIBS set
+# to the exact paths captured at that moment — avoiding wildcard/find at make
+# parse time, which silently returns empty on a clean tree.
+HALIF_OUT_DIR        := $(ROOT_DIR)/rdk-halif-aidl/out
+HALIF_LIB_DIR        := $(HALIF_OUT_DIR)/target/lib/halif
 
-XLDFLAGS := -L$(ROOT_DIR)/build/usr/lib
-XLDFLAGS += -Wl,-rpath-link=$(ROOT_DIR)/build/usr/lib -Wl,--export-dynamic -Wl,-rpath,.
+-include $(HALIF_OUT_DIR)/halif_generated.mk
+
+INC_DIRS             := $(HALIF_INC_DIRS)
+INC_DIRS             += $(ROOT_DIR)/build/usr/include
+INC_DIRS             += $(SRC_DIRS)
+
+XLDFLAGS             := -L$(ROOT_DIR)/build/usr/lib
+XLDFLAGS             += -Wl,-rpath-link=$(ROOT_DIR)/build/usr/lib -Wl,--export-dynamic -Wl,-rpath,.
+XLDFLAGS             += -L$(HALIF_LIB_DIR)
+XLDFLAGS             += -Wl,-rpath-link=$(HALIF_LIB_DIR)
+XLDFLAGS             += $(HALIF_MODULE_LIBS)
 ifeq ($(TARGET),arm)
 # ARM openssl is built by ut-core; add its lib dir before -lssl/-lcrypto so the
 # linker can resolve them (ut-control appends static paths, but they come after
 # the inherited -lssl/-lcrypto flags which would otherwise fail to resolve).
-XLDFLAGS += -L$(ROOT_DIR)/ut-core/framework/ut-control/build/$(TARGET)/openssl/lib
-XLDFLAGS += -Wl,-rpath-link=$(ROOT_DIR)/ut-core/framework/ut-control/build/$(TARGET)/openssl/lib
+XLDFLAGS             += -L$(ROOT_DIR)/ut-core/framework/ut-control/build/$(TARGET)/openssl/lib
+XLDFLAGS             += -Wl,-rpath-link=$(ROOT_DIR)/ut-core/framework/ut-control/build/$(TARGET)/openssl/lib
 endif
-XLDFLAGS += -lssl -lcrypto -lbinder -lutils
-XLDFLAGS += -laidl_client
+XLDFLAGS             += -lssl -lcrypto -lbinder -lutils
 
 # required for std::optional
 CXXFLAGS += -std=c++17
@@ -106,11 +123,18 @@ export INC_DIRS
 export XLDFLAGS
 export CXXFLAGS
 
-.PHONY: all clean
+.PHONY: all clean check-halif-built
 
 all: $(TARGET_EXEC)
 
-$(TARGET_EXEC):
+check-halif-built:
+	@[ -n "$(HALIF_INC_DIRS)" ] || { \
+		echo "ERROR: HAL interfaces not built."; \
+		echo "       Run: ./build.sh Target=$(TARGET)"; \
+		exit 1; \
+	}
+
+$(TARGET_EXEC): check-halif-built
 	make -C $(UT_CORE_DIR) -j $(shell nproc) TARGET=$(TARGET) VARIANT=$(VARIANT)
 
 clean:

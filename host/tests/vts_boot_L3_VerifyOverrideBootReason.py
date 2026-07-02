@@ -61,7 +61,7 @@ class vts_boot_L3_VerifyOverrideBootReason(bootHelperClass):
         
         # Get indices from configuration
         try:
-            bootReasonIndex = self.l3TestConfig.L3.BootReason.index(boot_reason)
+            bootReasonIndex = self.l3TestConfig.L3.BootCause.index(boot_reason)
             resetTypeIndex = self.l3TestConfig.L3.ResetTypes.index(reset_type)
         except ValueError as e:
             self.log.error(f"Configuration error: {e}")
