@@ -41,10 +41,10 @@ The L2 tests interact directly with the Boot HAL implementation to verify that s
 The L2 test suite validates the Boot HAL's set and get functionality by:
 
 1. Establishing a connection to the Boot HAL service via AIDL
-2. Setting boot reason values using `setBootReason()` API
-3. Retrieving boot reason values using `getBootReason()` API
+2. Setting boot cause values using `setBootCause()` API
+3. Retrieving boot cause values using `getBootCause()` API
 4. Validating that retrieved values match the previously set values
-5. Iterating through all supported BootReason enumeration values
+5. Iterating through all supported BootCause enumeration values
 6. Verifying state persistence and API consistency
 
 ### Test Setup
@@ -66,17 +66,17 @@ The following C++ test cases validate the Boot HAL L2 functionality:
 
 | Test Case | Description | HAL APIs | L2 Test Functions | Source |
 |-----------|-------------|----------|-------------------|---------|
-| setAndGetBootCause | Validates setting and retrieving boot causes for all supported values | `IBootReason::setBootCause()`<br>`IBootReason::getBootCause()` | `test_l2_boot_setAndGetBootCause()` | [vts_boot_l2_tests.cpp](../../src/vts_boot_l2_tests.cpp) |
+| setAndGetBootReason | Validates setting and retrieving boot causes for all supported values | `IBootReason::setBootCause()`<br>`IBootReason::getBootCause()` | `test_l2_boot_setAndGetBootReason()` | [vts_boot_l2_tests.cpp](../../src/vts_boot_l2_tests.cpp) |
 
 ---
 
 ## Test Case Details
 
-### Test 1: setAndGetBootCause
+### Test 1: setAndGetBootReason
 
 | Title | Details |
 |-------|----------|
-| Function Name | `setAndGetBootCause` |
+| Function Name | `setAndGetBootReason` |
 | Description | This test validates the read-write consistency of the Boot HAL's boot cause management. It ensures that boot causes can be set via `setBootCause()` and retrieved correctly via `getBootCause()`, with the retrieved value matching the set value for all supported boot causes. |
 | Test Group | 02 |
 | Test Case ID | 001 |

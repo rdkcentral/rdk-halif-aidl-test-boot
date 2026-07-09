@@ -44,8 +44,8 @@ The L3 test suite validates the Boot HAL's functionality through real device ope
 1. Establishing a connection to the Boot HAL service via AIDL
 2. Accepting user input for test parameters (reset types, boot reasons)
 3. Executing device reboot operations using `reboot()` API
-4. Verifying boot reasons using `getBootReason()` after reboot
-5. Testing boot reason override functionality with `setBootReason()`
+4. Verifying boot causes using `getBootCause()` after reboot
+5. Testing boot cause override functionality with `setBootCause()`
 6. Validating actual device behavior matches expected outcomes
 7. Verifying state persistence across reboots
 
@@ -72,8 +72,8 @@ The following C++ test cases validate the Boot HAL L3 functionality:
 | Test Case | Description | HAL APIs | L3 Test Functions | Source |
 |-----------|-------------|----------|-------------------|---------|
 | rebootSystem | Validates device reboot with user-selected reset type | `IBootReason::reboot()` | `test_l3_boot_rebootSystem()` | [vts_boot_l3_tests.cpp](../../src/vts_boot_l3_tests.cpp) |
-| checkBootCause | Validates boot cause retrieval and verification against the expected value in the L3 test configuration file | `IBootReason::getBootCause()`<br>`IBootReason::getCapabilities()` | `test_l3_boot_checkBootCause()` | [vts_boot_l3_tests.cpp](../../src/vts_boot_l3_tests.cpp) |
-| overrideBootCause | Validates boot cause override functionality before reboot | `IBootReason::setBootCause()`<br>`IBootReason::getBootCause()` | `test_l3_boot_overrideBootCause()` | [vts_boot_l3_tests.cpp](../../src/vts_boot_l3_tests.cpp) |
+| checkBootReason | Validates boot cause retrieval and verification against the expected value in the L3 test configuration file | `IBootReason::getBootCause()`<br>`IBootReason::getCapabilities()` | `test_l3_boot_checkBootReason()` | [vts_boot_l3_tests.cpp](../../src/vts_boot_l3_tests.cpp) |
+| overrideBootReason | Validates boot cause override functionality before reboot | `IBootReason::setBootCause()`<br>`IBootReason::getBootCause()` | `test_l3_boot_overrideBootReason()` | [vts_boot_l3_tests.cpp](../../src/vts_boot_l3_tests.cpp) |
 
 ---
 
@@ -142,11 +142,11 @@ graph TD
 
 ---
 
-### Test 2: checkBootCause
+### Test 2: checkBootReason
 
 | Title | Details |
 |-------|----------|
-| Function Name | `checkBootCause` |
+| Function Name | `checkBootReason` |
 | Description | This test validates that the boot cause retrieved from the device matches the expected boot cause specified in the `ValidateBootReason` field of the L3 test configuration file (`vts_l3_boot.yaml`). The expected value is written dynamically by the Python test framework before this test is executed. It verifies proper boot cause tracking across device boots. |
 | Test Group | 03 |
 | Test Case ID | 002 |
@@ -202,11 +202,11 @@ graph TD
 
 ---
 
-### Test 3: overrideBootCause
+### Test 3: overrideBootReason
 
 | Title | Details |
 |-------|----------|
-| Function Name | `overrideBootCause` |
+| Function Name | `overrideBootReason` |
 | Description | This test validates the boot cause override functionality. It allows the user to set a specific boot cause and prepares for verification after a subsequent reboot. This tests the `setBootCause()` API and prepares for cross-reboot validation. |
 | Test Group | 03 |
 | Test Case ID | 003 |
