@@ -224,7 +224,7 @@ At test runtime, `triggerReboot(boot_reason)` is called:
 The YAML message format used for vDevice:
 
 ```yaml
-boot:
+bootreason:
   command: bootReason
   params:
     reason: "<BOOT_REASON>"
@@ -280,7 +280,7 @@ The Boot L3 tests use the UT-Controller to simulate boot scenarios on vDevice. T
 
 **UT-Controller Message Format:**
 ```yaml
-boot:
+bootreason:
   command: bootReason
   params:
     reason: "<BOOT_REASON>"

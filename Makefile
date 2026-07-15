@@ -128,7 +128,7 @@ export CXXFLAGS
 all: $(TARGET_EXEC)
 
 check-halif-built:
-	@[ -n "$(HALIF_INC_DIRS)" ] || { \
+	@[ -n "$(HALIF_INC_DIRS)" ] && [ -n "$(HALIF_MODULE_LIBS)" ] || { \
 		echo "ERROR: HAL interfaces not built."; \
 		echo "       Run: ./build.sh Target=$(TARGET)"; \
 		exit 1; \

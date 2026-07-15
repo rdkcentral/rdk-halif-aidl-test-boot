@@ -88,8 +88,8 @@
         UT_LOG_DEBUG("Capabilities supportedBootCauses size: %zu", capabilities.supportedBootCauses.size()); \
      }while (0)
 
-// Macro for getBootReason - positive case
-#define BOOT_GETBOOTREASON_SUCCESS(bootHandle, bootReason)                 \
+// Macro for getBootCause - positive case
+#define BOOT_GETBOOTCAUSE_SUCCESS(bootHandle, bootReason)                 \
     do{                                                                           \
         ::android::binder::Status status; \
         UT_LOG_DEBUG("Calling getBootCause(OUT:bootCause)"); \
@@ -136,8 +136,8 @@
         UT_ASSERT_EQUAL(status.exceptionCode(), ::android::binder::Status::EX_NONE); \
      }while (0)
 
-// Macro for setBootReason - positive case
-#define BOOT_SETBOOTREASON_SUCCESS(bootHandle, bootReason, reasonString)                 \
+// Macro for setBootCause - positive case
+#define BOOT_SETBOOTCAUSE_SUCCESS(bootHandle, bootReason, reasonString)                 \
     do{                                                                           \
         ::android::binder::Status status; \
         UT_LOG_DEBUG("Calling setBootCause(IN:bootCause[%s], reasonString[%s])", com::rdk::hal::bootreason::toString(bootReason).c_str(), reasonString.c_str()); \
@@ -147,8 +147,8 @@
         UT_ASSERT_EQUAL(status.exceptionCode(), ::android::binder::Status::EX_NONE); \
      }while (0)
 
-// Macro for setBootReason - negative case
-#define BOOT_SETBOOTREASON_FAILURE(bootHandle, bootReason, reasonString, expectedException) \
+// Macro for setBootCause - negative case
+#define BOOT_SETBOOTCAUSE_FAILURE(bootHandle, bootReason, reasonString, expectedException) \
     do                                                                                      \
     {                                                                                       \
         ::android::binder::Status status;                                                   \

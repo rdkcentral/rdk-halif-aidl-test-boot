@@ -96,9 +96,9 @@ public:
 };
 
 /**
- * @brief Validate setBootReason() and getBootReason() functionality for all supported boot reasons.
+ * @brief Validate setBootCause() and getBoot() functionality for all supported boot reasons.
  *
- * This test verifies the correct operation of setBootReason() and getBootReason() methods
+ * This test verifies the correct operation of setBootCause() and getBootReason() methods
  * by iterating through all available boot reason enum values. It sets each boot reason
  * and immediately retrieves it to ensure the value persists correctly and matches the
  * originally set value. This validates the complete round-trip behavior of boot reason
@@ -133,11 +133,11 @@ UT_ADD_TEST(VTS_L2_BOOT, setAndGetBootReason)
         std::string reasonString = com::rdk::hal::bootreason::toString(bootReason);
         UT_LOG_INFO(" %s : %d\n", reasonString.c_str(), bootReason);
 
-        BOOT_SETBOOTREASON_SUCCESS(bootHandle, bootReason, reasonString);
+        BOOT_SETBOOTCAUSE_SUCCESS(bootHandle, bootReason, reasonString);
         sleep(1); // Sleep for a short duration to ensure the boot reason is set before we attempt to get it back
 
         com::rdk::hal::bootreason::BootCause bootReasonReturned;
-        BOOT_GETBOOTREASON_SUCCESS(bootHandle, bootReasonReturned);
+        BOOT_GETBOOTCAUSE_SUCCESS(bootHandle, bootReasonReturned);
 
         // Validate that the set boot reason matches the returned boot reason
         UT_ASSERT_STRING_EQUAL(reasonString.c_str(), com::rdk::hal::bootreason::toString(bootReasonReturned).c_str());

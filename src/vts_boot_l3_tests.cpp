@@ -202,7 +202,7 @@ UT_ADD_TEST(VTS_L3_BOOT, checkBootReason)
     android::sp<com::rdk::hal::bootreason::IBootReason> bootHandle = gBOOTHandle;
     UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
     com::rdk::hal::bootreason::BootCause bootReason;
-    BOOT_GETBOOTREASON_SUCCESS(bootHandle, bootReason);
+    BOOT_GETBOOTCAUSE_SUCCESS(bootHandle, bootReason);
     com::rdk::hal::bootreason::Capabilities capabilities;
     BOOT_GETCAPABILITIES_SUCCESS(bootHandle, capabilities);
     UT_LOG_DEBUG("Boot Reason: %s", com::rdk::hal::bootreason::toString(bootReason).c_str());
@@ -250,8 +250,8 @@ UT_ADD_TEST(VTS_L3_BOOT, overrideBootReason)
 {
     android::sp<com::rdk::hal::bootreason::IBootReason> bootHandle = gBOOTHandle;
     UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
-    // Set boot reason from user input
-    UT_LOG_INFO("Enter boot reason to set from below options:");
+    // Set boot cause from user input
+    UT_LOG_INFO("Enter boot cause to set from the below options:");
     for(const auto &bootReason : android::internal::enum_values<com::rdk::hal::bootreason::BootCause>)
     {
         UT_LOG_INFO(" %s : %d\n", com::rdk::hal::bootreason::toString(bootReason).c_str(), bootReason);
@@ -283,13 +283,13 @@ UT_ADD_TEST(VTS_L3_BOOT, overrideBootReason)
     UT_ASSERT_TRUE(validBootReason); // Validate that the input boot reason is valid
     if (!validBootReason)
     {
-        UT_LOG_ERROR("Invalid boot reason selected: %s\n", com::rdk::hal::bootreason::toString(uBootReason).c_str());
-        return; // Exit test if invalid boot reason is selected
+        UT_LOG_ERROR("Invalid boot cause selected: %s\n", com::rdk::hal::bootreason::toString(uBootReason).c_str());
+        return; // Exit test if invalid boot cause is selected
     }
     std::string reasonString = com::rdk::hal::bootreason::toString(uBootReason);
-    BOOT_SETBOOTREASON_SUCCESS(bootHandle, uBootReason, reasonString);
+    BOOT_SETBOOTCAUSE_SUCCESS(bootHandle, uBootReason, reasonString);
 
-    UT_LOG_INFO("Boot reason set using setBootCause: %s", com::rdk::hal::bootreason::toString(uBootReason).c_str());
+    UT_LOG_INFO("Boot cause set using setBootCause: %s", com::rdk::hal::bootreason::toString(uBootReason).c_str());
     UT_LOG_INFO("Now reboot the system to check if override works as expected, select test 1 : rebootSystem\n");
 }
 

@@ -175,9 +175,9 @@ UT_ADD_TEST(VTS_L1_BOOT, getCapabilities_pos)
 }
 
 /**
- * @brief Positive test for setBootReason() function of boot interface
+ * @brief Positive test for setBootCause() function of boot interface
  *
- * This test verifies that the setBootReason() method successfully sets a valid
+ * This test verifies that the setBootCause() method successfully sets a valid
  * boot reason with an appropriate reason string.
  *
  * **Test Group ID:** 01@n
@@ -189,22 +189,22 @@ UT_ADD_TEST(VTS_L1_BOOT, getCapabilities_pos)
  * | 1    | Obtain boot handle                              | gBOOTHandle                                             | bootHandle is not nullptr                          |                                            |
  * | 2    | Set boot reason to ERROR_UNKNOWN                | bootReasonToSet = BootReason::ERROR_UNKNOWN             | Boot reason enum assigned                          |                                            |
  * | 3    | Convert boot reason to string                   | toString(bootReasonToSet)                               | reasonString populated                             |                                            |
- * | 4    | Call BOOT_SETBOOTREASON_SUCCESS                 | bootHandle, bootReasonToSet, reasonString               | Status::ok() returned                              | Boot reason successfully set               |
+ * | 4    | Call BOOT_SETBOOTCAUSE_SUCCESS                 | bootHandle, bootReasonToSet, reasonString               | Status::ok() returned                              | Boot reason successfully set               |
  *
  */
-UT_ADD_TEST(VTS_L1_BOOT, setBootReason_pos)
+UT_ADD_TEST(VTS_L1_BOOT, setBootCause_pos)
 {
     android::sp<com::rdk::hal::bootreason::IBootReason> bootHandle = gBOOTHandle;
     UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
     com::rdk::hal::bootreason::BootCause bootReasonToSet = com::rdk::hal::bootreason::BootCause::ERROR_UNKNOWN;
     std::string reasonString = com::rdk::hal::bootreason::toString(bootReasonToSet);
-    BOOT_SETBOOTREASON_SUCCESS(bootHandle, bootReasonToSet, reasonString);
+    BOOT_SETBOOTCAUSE_SUCCESS(bootHandle, bootReasonToSet, reasonString);
 }
 
 /**
- * @brief Negative test for setBootReason() function of boot interface
+ * @brief Negative test for setBootCause() function of boot interface
  *
- * This test verifies that the setBootReason() method correctly rejects invalid
+ * This test verifies that the setBootCause() method correctly rejects invalid
  * inputs including unsupported boot reason enum values and empty reason strings.
  *
  * **Test Group ID:** 01@n
@@ -216,12 +216,12 @@ UT_ADD_TEST(VTS_L1_BOOT, setBootReason_pos)
  * | 1    | Obtain boot handle                              | gBOOTHandle                                             | bootHandle is not nullptr                          |                                            |
  * | 2    | Set invalid boot reason                         | invalidBootReason = -999                                | Invalid enum value assigned                        |                                            |
  * | 3    | Convert invalid boot reason to string           | toString(invalidBootReason)                             | reasonString populated                             |                                            |
- * | 4    | Call BOOT_SETBOOTREASON_FAILURE                 | bootHandle, invalidBootReason, reasonString             | EX_ILLEGAL_ARGUMENT returned                       | Unsupported boot reason rejected           |
- * | 5    | Call BOOT_SETBOOTREASON_FAILURE with empty string | bootHandle, ERROR_UNKNOWN, ""                           | EX_ILLEGAL_ARGUMENT returned                       | Empty reason string rejected               |
- * | 6    | Call BOOT_SETBOOTREASON_FAILURE with >64 byte string | bootHandle, ERROR_UNKNOWN, 65-char string           | EX_ILLEGAL_ARGUMENT returned                       | causeString exceeding 64 bytes rejected    |
+ * | 4    | Call BOOT_SETBOOTCAUSE_FAILURE                 | bootHandle, invalidBootReason, reasonString             | EX_ILLEGAL_ARGUMENT returned                       | Unsupported boot reason rejected           |
+ * | 5    | Call BOOT_SETBOOTCAUSE_FAILURE with empty string | bootHandle, ERROR_UNKNOWN, ""                           | EX_ILLEGAL_ARGUMENT returned                       | Empty reason string rejected               |
+ * | 6    | Call BOOT_SETBOOTCAUSE_FAILURE with >64 byte string | bootHandle, ERROR_UNKNOWN, 65-char string           | EX_ILLEGAL_ARGUMENT returned                       | causeString exceeding 64 bytes rejected    |
  *
  */
-UT_ADD_TEST(VTS_L1_BOOT, setBootReason_neg)
+UT_ADD_TEST(VTS_L1_BOOT, setBootCause_neg)
 {
     android::sp<com::rdk::hal::bootreason::IBootReason> bootHandle = gBOOTHandle;
     UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
@@ -229,14 +229,14 @@ UT_ADD_TEST(VTS_L1_BOOT, setBootReason_neg)
     // Using an unsupported boot reason to test negative case
     com::rdk::hal::bootreason::BootCause invalidBootReason = static_cast<com::rdk::hal::bootreason::BootCause>(INVALID_ENUM_TEST_VALUE);
     std::string reasonString = com::rdk::hal::bootreason::toString(invalidBootReason);
-    BOOT_SETBOOTREASON_FAILURE(bootHandle, invalidBootReason, reasonString.c_str(), ::android::binder::Status::EX_ILLEGAL_ARGUMENT);
+    BOOT_SETBOOTCAUSE_FAILURE(bootHandle, invalidBootReason, reasonString.c_str(), ::android::binder::Status::EX_ILLEGAL_ARGUMENT);
 
     // Using empty reason string to test negative case
-    BOOT_SETBOOTREASON_FAILURE(bootHandle, com::rdk::hal::bootreason::BootCause::ERROR_UNKNOWN, "", ::android::binder::Status::EX_ILLEGAL_ARGUMENT);
+    BOOT_SETBOOTCAUSE_FAILURE(bootHandle, com::rdk::hal::bootreason::BootCause::ERROR_UNKNOWN, "", ::android::binder::Status::EX_ILLEGAL_ARGUMENT);
 
     // Using a causeString exceeding the 64-byte limit to test negative case
     std::string longReasonString(65, 'a'); // 65 characters, one byte beyond the 64-byte limit
-    BOOT_SETBOOTREASON_FAILURE(bootHandle, com::rdk::hal::bootreason::BootCause::ERROR_UNKNOWN, longReasonString.c_str(), ::android::binder::Status::EX_ILLEGAL_ARGUMENT);
+    BOOT_SETBOOTCAUSE_FAILURE(bootHandle, com::rdk::hal::bootreason::BootCause::ERROR_UNKNOWN, longReasonString.c_str(), ::android::binder::Status::EX_ILLEGAL_ARGUMENT);
 }
 
 /**
@@ -253,7 +253,7 @@ UT_ADD_TEST(VTS_L1_BOOT, setBootReason_neg)
  * | Step | Action                                          | Input / Test Data                                       | Expected Result                                    | Notes                                      |
  * |------|-------------------------------------------------|---------------------------------------------------------|----------------------------------------------------|-----------------------------------------|
  * | 1    | Obtain boot handle                              | gBOOTHandle                                             | bootHandle is not nullptr                          |                                            |
- * | 2    | Call BOOT_GETBOOTREASON_SUCCESS                 | bootHandle, bootReason                                  | bootReason is populated                            |                                            |
+ * | 2    | Call BOOT_GETBOOTCAUSE_SUCCESS                 | bootHandle, bootReason                                  | bootReason is populated                            |                                            |
  * | 3    | Call BOOT_GETCAPABILITIES_SUCCESS               | bootHandle, capabilities                                | capabilities structure is populated                |                                            |
  * | 4    | Validate boot reason against capabilities       | bootReason, capabilities.supportedBootCauses            | bootReason matches one of supported reasons        | Ensures returned reason is valid           |
  *
@@ -263,7 +263,7 @@ UT_ADD_TEST(VTS_L1_BOOT, getBootReason_pos)
     android::sp<com::rdk::hal::bootreason::IBootReason> bootHandle = gBOOTHandle;
     UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
     com::rdk::hal::bootreason::BootCause bootReason;
-    BOOT_GETBOOTREASON_SUCCESS(bootHandle, bootReason);
+    BOOT_GETBOOTCAUSE_SUCCESS(bootHandle, bootReason);
 
     // Validate that the returned boot reason is among the supported boot reasons in capabilities
     com::rdk::hal::bootreason::Capabilities capabilities;
