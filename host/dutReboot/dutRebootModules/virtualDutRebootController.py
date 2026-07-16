@@ -94,7 +94,7 @@ class VirtualDutRebootController(DutRebootInterface):
         reason = boot_reason if boot_reason in supported_reasons else "ERROR_UNKNOWN"
         
         yaml_content = (
-            "boot:\n"
+            "bootreason:\n"
             "  command: bootReason\n"
             "  params:\n"
             f"    reason: \"{reason}\"\n"

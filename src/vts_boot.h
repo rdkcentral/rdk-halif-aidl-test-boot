@@ -70,7 +70,7 @@
 #include <binder/Status.h>
 #include <utils/String16.h>
 
-#include "com/rdk/hal/boot/IBoot.h"
+#include "com/rdk/hal/bootreason/IBootReason.h"
 #include <iostream>
 
 #define BOOT_L3_TEST_CONFIG_FILE "test_configuration/vts_l3_boot.yaml"
@@ -85,16 +85,16 @@
         UT_ASSERT_TRUE(status.isOk());                                        \
         UT_ASSERT_EQUAL(status.exceptionCode(), ::android::binder::Status::EX_NONE); \
         UT_LOG_DEBUG("Capabilities supportedResetTypes size: %zu", capabilities.supportedResetTypes.size()); \
-        UT_LOG_DEBUG("Capabilities supportedBootReasons size: %zu", capabilities.supportedBootReasons.size()); \
+        UT_LOG_DEBUG("Capabilities supportedBootCauses size: %zu", capabilities.supportedBootCauses.size()); \
      }while (0)
 
-// Macro for getBootReason - positive case
-#define BOOT_GETBOOTREASON_SUCCESS(bootHandle, bootReason)                 \
+// Macro for getBootCause - positive case
+#define BOOT_GETBOOTCAUSE_SUCCESS(bootHandle, bootReason)                 \
     do{                                                                           \
         ::android::binder::Status status; \
-        UT_LOG_DEBUG("Calling getBootReason(OUT:bootReason)"); \
-        status = bootHandle->getBootReason(&bootReason); \
-        UT_LOG_DEBUG("Result getBootReason(OUT:bootReason), status:[isOK:%d, exception:%d, bootReason:%s]", status.isOk(), status.exceptionCode(), com::rdk::hal::boot::toString(bootReason).c_str()); \
+        UT_LOG_DEBUG("Calling getBootCause(OUT:bootCause)"); \
+        status = bootHandle->getBootCause(&bootReason); \
+        UT_LOG_DEBUG("Result getBootCause(OUT:bootCause), status:[isOK:%d, exception:%d, bootCause:%s]", status.isOk(), status.exceptionCode(), com::rdk::hal::bootreason::toString(bootReason).c_str()); \
         UT_ASSERT_TRUE(status.isOk());                                        \
         UT_ASSERT_EQUAL(status.exceptionCode(), ::android::binder::Status::EX_NONE); \
      }while (0)
@@ -103,7 +103,7 @@
 #define BOOT_REBOOT_SUCCESS(bootHandle, resetTypes, reasonString)                 \
     do{                                                                           \
         ::android::binder::Status status; \
-        UT_LOG_DEBUG("Calling reboot(IN:resetTypes[%s], reasonString[%s])", com::rdk::hal::boot::toString(resetTypes).c_str(), ::android::String8(reasonString).c_str()); \
+        UT_LOG_DEBUG("Calling reboot(IN:resetTypes[%s], reasonString[%s])", com::rdk::hal::bootreason::toString(resetTypes).c_str(), ::android::String8(reasonString).c_str()); \
         fflush(stdout); \
         fflush(stderr); \
         sleep(1); /* Sleep for a short duration to allow log to be printed before reboot happens */ \
@@ -117,7 +117,7 @@
 #define BOOT_REBOOT_FAILURE(bootHandle, resetTypes, reasonString, expectedException)                 \
     do{                                                                           \
         ::android::binder::Status status; \
-        UT_LOG_DEBUG("Calling reboot(IN:resetTypes[%s], reasonString[%s])", com::rdk::hal::boot::toString(resetTypes).c_str(), ::android::String8(reasonString).c_str()); \
+        UT_LOG_DEBUG("Calling reboot(IN:resetTypes[%s], reasonString[%s])", com::rdk::hal::bootreason::toString(resetTypes).c_str(), ::android::String8(reasonString).c_str()); \
         sleep(1); /* Sleep for a short duration to allow log to be printed before reboot happens */ \
         status = bootHandle->reboot(resetTypes, reasonString); \
         UT_LOG_DEBUG("Result set(OUT:), status:[isOK:%s, exception:%s]", status.isOk() ? "true" : "false", std::to_string(status.exceptionCode()).c_str()); \
@@ -131,24 +131,24 @@
         ::android::binder::Status status; \
         UT_LOG_DEBUG("Calling getPowerSource(OUT:powerSource)"); \
         status = bootHandle->getPowerSource(&powerSource); \
-        UT_LOG_DEBUG("Result getPowerSource(OUT:powerSource), status:[isOK:%d, exception:%d, powerSource:%s]", status.isOk(), status.exceptionCode(), com::rdk::hal::boot::toString(powerSource).c_str()); \
+        UT_LOG_DEBUG("Result getPowerSource(OUT:powerSource), status:[isOK:%d, exception:%d, powerSource:%s]", status.isOk(), status.exceptionCode(), com::rdk::hal::bootreason::toString(powerSource).c_str()); \
         UT_ASSERT_TRUE(status.isOk());                                        \
         UT_ASSERT_EQUAL(status.exceptionCode(), ::android::binder::Status::EX_NONE); \
      }while (0)
 
-// Macro for setBootReason - positive case
-#define BOOT_SETBOOTREASON_SUCCESS(bootHandle, bootReason, reasonString)                 \
+// Macro for setBootCause - positive case
+#define BOOT_SETBOOTCAUSE_SUCCESS(bootHandle, bootReason, reasonString)                 \
     do{                                                                           \
         ::android::binder::Status status; \
-        UT_LOG_DEBUG("Calling setBootReason(IN:bootReason[%s], reasonString[%s])", com::rdk::hal::boot::toString(bootReason).c_str(), reasonString.c_str()); \
-        status = bootHandle->setBootReason(bootReason, ::android::String16(reasonString.c_str())); \
-        UT_LOG_DEBUG("Result setBootReason(OUT:), status:[isOK:%s, exception:%s]", status.isOk() ? "true" : "false", std::to_string(status.exceptionCode()).c_str()); \
+        UT_LOG_DEBUG("Calling setBootCause(IN:bootCause[%s], reasonString[%s])", com::rdk::hal::bootreason::toString(bootReason).c_str(), reasonString.c_str()); \
+        status = bootHandle->setBootCause(bootReason, ::android::String16(reasonString.c_str())); \
+        UT_LOG_DEBUG("Result setBootCause(OUT:), status:[isOK:%s, exception:%s]", status.isOk() ? "true" : "false", std::to_string(status.exceptionCode()).c_str()); \
         UT_ASSERT_TRUE(status.isOk());                                        \
         UT_ASSERT_EQUAL(status.exceptionCode(), ::android::binder::Status::EX_NONE); \
      }while (0)
 
-// Macro for setBootReason - negative case
-#define BOOT_SETBOOTREASON_FAILURE(bootHandle, bootReason, reasonString, expectedException) \
+// Macro for setBootCause - negative case
+#define BOOT_SETBOOTCAUSE_FAILURE(bootHandle, bootReason, reasonString, expectedException) \
     do                                                                                      \
     {                                                                                       \
         ::android::binder::Status status;                                                   \
@@ -156,9 +156,9 @@
                       ? reasonString                                                \
                       : "NULL";                                                     \
         ::android::String16 reasonStr16 = reasonString ? ::android::String16(reasonString) : ::android::String16(); \
-        UT_LOG_DEBUG("Calling setBootReason(IN:bootReason[%s], reasonString[%s])", com::rdk::hal::boot::toString(bootReason).c_str(), _rs); \
-        status = bootHandle->setBootReason(bootReason, reasonStr16); \
-        UT_LOG_DEBUG("Result setBootReason(OUT:), status:[isOK:%s, exception:%d]", status.isOk() ? "true" : "false", status.exceptionCode()); \
+        UT_LOG_DEBUG("Calling setBootCause(IN:bootCause[%s], reasonString[%s])", com::rdk::hal::bootreason::toString(bootReason).c_str(), _rs); \
+        status = bootHandle->setBootCause(bootReason, reasonStr16); \
+        UT_LOG_DEBUG("Result setBootCause(OUT:), status:[isOK:%s, exception:%d]", status.isOk() ? "true" : "false", status.exceptionCode()); \
         UT_ASSERT_FALSE(status.isOk()); \
         UT_ASSERT_EQUAL(status.exceptionCode(), expectedException); \
     }while (0)

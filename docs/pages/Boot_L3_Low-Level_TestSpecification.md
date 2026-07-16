@@ -44,8 +44,8 @@ The L3 test suite validates the Boot HAL's functionality through real device ope
 1. Establishing a connection to the Boot HAL service via AIDL
 2. Accepting user input for test parameters (reset types, boot reasons)
 3. Executing device reboot operations using `reboot()` API
-4. Verifying boot reasons using `getBootReason()` after reboot
-5. Testing boot reason override functionality with `setBootReason()`
+4. Verifying boot causes using `getBootCause()` after reboot
+5. Testing boot cause override functionality with `setBootCause()`
 6. Validating actual device behavior matches expected outcomes
 7. Verifying state persistence across reboots
 
@@ -58,7 +58,7 @@ The L3 test suite validates the Boot HAL's functionality through real device ope
 | Device Under Test | Target device with Boot HAL implementation |
 | Test Framework | UT-Core Framework v4.7.0 or later |
 | AIDL Support | Linux Binder with AIDL support |
-| Boot HAL | Vendor implementation of com.rdk.hal.boot.IBoot |
+| Boot HAL | Vendor implementation of `com.rdk.hal.bootreason.IBootReason` |
 | Network Access | Required for verifying device availability after reboot |
 | Console Access | Required for monitoring reboot process |
 | Profile Configuration | YAML profile defining supported boot capabilities |
@@ -71,9 +71,9 @@ The following C++ test cases validate the Boot HAL L3 functionality:
 
 | Test Case | Description | HAL APIs | L3 Test Functions | Source |
 |-----------|-------------|----------|-------------------|---------|
-| rebootSystem | Validates device reboot with user-selected reset type | `IBoot::reboot()` | `test_l3_boot_rebootSystem()` | [vts_boot_l3_tests.cpp](../../src/vts_boot_l3_tests.cpp) |
-| checkBootReason | Validates boot reason retrieval and verification against the expected value in the L3 test configuration file | `IBoot::getBootReason()`<br>`IBoot::getCapabilities()` | `test_l3_boot_checkBootReason()` | [vts_boot_l3_tests.cpp](../../src/vts_boot_l3_tests.cpp) |
-| overrideBootReason | Validates boot reason override functionality before reboot | `IBoot::setBootReason()`<br>`IBoot::getBootReason()` | `test_l3_boot_overrideBootReason()` | [vts_boot_l3_tests.cpp](../../src/vts_boot_l3_tests.cpp) |
+| rebootSystem | Validates device reboot with user-selected reset type | `IBootReason::reboot()` | `test_l3_boot_rebootSystem()` | [vts_boot_l3_tests.cpp](../../src/vts_boot_l3_tests.cpp) |
+| checkBootReason | Validates boot cause retrieval and verification against the expected value in the L3 test configuration file | `IBootReason::getBootCause()`<br>`IBootReason::getCapabilities()` | `test_l3_boot_checkBootReason()` | [vts_boot_l3_tests.cpp](../../src/vts_boot_l3_tests.cpp) |
+| overrideBootReason | Validates boot cause override functionality before reboot | `IBootReason::setBootCause()`<br>`IBootReason::getBootCause()` | `test_l3_boot_overrideBootReason()` | [vts_boot_l3_tests.cpp](../../src/vts_boot_l3_tests.cpp) |
 
 ---
 
@@ -96,7 +96,7 @@ The following C++ test cases validate the Boot HAL L3 functionality:
 - Device must be in operational state
 
 **Dependencies:** 
-- Boot HAL Interface: `com.rdk.hal.boot.IBoot`
+- Boot HAL Interface: `com.rdk.hal.bootreason.IBootReason`
 - UT-Core Framework
 - Profile configuration with supported reset types
 - Network connectivity for post-reboot verification
@@ -147,7 +147,7 @@ graph TD
 | Title | Details |
 |-------|----------|
 | Function Name | `checkBootReason` |
-| Description | This test validates that the boot reason retrieved from the device matches the expected boot reason specified in the `ValidateBootReason` field of the L3 test configuration file (`vts_l3_boot.yaml`). The expected value is written dynamically by the Python test framework before this test is executed. It verifies proper boot reason tracking across device boots. |
+| Description | This test validates that the boot cause retrieved from the device matches the expected boot cause specified in the `ValidateBootReason` field of the L3 test configuration file (`vts_l3_boot.yaml`). The expected value is written dynamically by the Python test framework before this test is executed. It verifies proper boot cause tracking across device boots. |
 | Test Group | 03 |
 | Test Case ID | 002 |
 | Priority | High |
@@ -158,9 +158,9 @@ graph TD
 - Device must have a valid boot reason set
 
 **Dependencies:** 
-- Boot HAL Interface: `com.rdk.hal.boot.IBoot`
+- Boot HAL Interface: `com.rdk.hal.bootreason.IBootReason`
 - UT-Core Framework
-- Profile configuration with supported boot reasons
+- Profile configuration with supported boot causes
 
 **User Interaction:** 
 If user chose to run the test in interactive mode, then the test case has to be selected via console.
@@ -172,9 +172,9 @@ graph TD
     A[Get Boot HAL Handle] --> B{Handle Valid?}
     B -->|No| C[FAIL: Handle is NULL]
     B -->|Yes| D[Call getBootReason]
-    D --> E{getBootReason Success?}
-    E -->|No| F[FAIL: getBootReason Failed]
-    E -->|Yes| G[Log Boot Reason]
+    D --> E{getBootCause Success?}
+    E -->|No| F[FAIL: getBootCause Failed]
+    E -->|Yes| G[Log Boot Cause]
     G --> H[Call getCapabilities]
     H --> I{getCapabilities Success?}
     I -->|No| J[FAIL: getCapabilities Failed]
@@ -192,11 +192,11 @@ graph TD
 | Variation / Steps | Description | Test Data | Expected Result | Notes |
 |-------------------|-------------|-----------|-----------------|-------|
 | 1 | Get Boot HAL Handle | None | Boot HAL handle should be non-null (`bootHandle != nullptr`) | Verify service is accessible |
-| 2 | Get Current Boot Reason | None | `getBootReason()` returns success<br>Valid BootReason enum value returned | Retrieve current boot reason |
-| 3 | Log Boot Reason | Boot reason value | Boot reason logged successfully | Display boot reason string |
+| 2 | Get Current Boot Cause | None | `getBootCause()` returns success<br>Valid BootCause enum value returned | Retrieve current boot cause |
+| 3 | Log Boot Cause | Boot cause value | Boot cause logged successfully | Display boot cause string |
 | 4 | Get Device Capabilities | None | `getCapabilities()` returns success<br>Capabilities structure populated | |
-| 5 | Read ValidateBootReason from YAML | `Boot/L3/ValidateBootReason` key in `vts_l3_boot.yaml` | `ValidateBootReason` string value obtained | Value is written by the Python test framework before this test runs |
-| 6 | Assert Boot Reason Matches | `toString(bootReason)` vs `ValidateBootReason` | `UT_ASSERT_STRING_EQUAL` passes | Boot reason must exactly match the expected value from YAML |
+| 5 | Read ValidateBootReason from YAML | `BootReason/L3/ValidateBootReason` key in `vts_l3_boot.yaml` | `ValidateBootReason` string value obtained | Value is written by the Python test framework before this test runs |
+| 6 | Assert Boot Cause Matches | `toString(bootCause)` vs `ValidateBootReason` | `UT_ASSERT_STRING_EQUAL` passes | Boot cause must exactly match the expected value from YAML |
 | 7 | Log Match Result | Matched boot reason | Log successful match | Display matched boot reason |
 | 8 | Test Complete | None | Boot reason validated successfully | Test PASS |
 
@@ -207,7 +207,7 @@ graph TD
 | Title | Details |
 |-------|----------|
 | Function Name | `overrideBootReason` |
-| Description | This test validates the boot reason override functionality. It allows the user to set a specific boot reason and prepares for verification after a subsequent reboot. This tests the `setBootReason()` API and prepares for cross-reboot validation. |
+| Description | This test validates the boot cause override functionality. It allows the user to set a specific boot cause and prepares for verification after a subsequent reboot. This tests the `setBootCause()` API and prepares for cross-reboot validation. |
 | Test Group | 03 |
 | Test Case ID | 003 |
 | Priority | High |
@@ -218,13 +218,13 @@ graph TD
 - Test requires write permissions for boot state
 
 **Dependencies:** 
-- Boot HAL Interface: `com.rdk.hal.boot.IBoot`
+- Boot HAL Interface: `com.rdk.hal.bootreason.IBootReason`
 - UT-Core Framework
 - Test 1 (rebootSystem) for subsequent verification
-- Profile configuration with supported boot reasons
+- Profile configuration with supported boot causes
 
 **User Interaction:** 
-Yes - User must select a boot reason from the available options presented in the console, then manually execute Test 1 (rebootSystem) for verification.
+Yes - User must select a boot cause from the available options presented in the console, then manually execute Test 1 (rebootSystem) for verification.
 
 **Test Flow Diagram:**
 
@@ -232,18 +232,18 @@ Yes - User must select a boot reason from the available options presented in the
 graph TD
     A[Get Boot HAL Handle] --> B{Handle Valid?}
     B -->|No| C[FAIL: Handle is NULL]
-    B -->|Yes| D[Display Boot Reason Options]
+    B -->|Yes| D[Display Boot Cause Options]
     D --> E[Accept User Input]
     E --> F{Valid Integer Input?}
     F -->|No| G[FAIL: Invalid Input]
-    F -->|Yes| H[Convert to BootReason Enum]
-    H --> I{Valid BootReason?}
-    I -->|No| J[FAIL: Invalid Boot Reason]
-    I -->|Yes| K[Log Selected Boot Reason]
-    K --> L[Create Reason String]
-    L --> M[Call setBootReason]
-    M --> N{setBootReason Success?}
-    N -->|No| O[FAIL: setBootReason Failed]
+    F -->|Yes| H[Convert to BootCause Enum]
+    H --> I{Valid BootCause?}
+    I -->|No| J[FAIL: Invalid Boot Cause]
+    I -->|Yes| K[Log Selected Boot Cause]
+    K --> L[Create Cause String]
+    L --> M[Call setBootCause]
+    M --> N{setBootCause Success?}
+    N -->|No| O[FAIL: setBootCause Failed]
     N -->|Yes| P[Log Override Success]
     P --> Q[Display Next Steps Message]
     Q --> R[PASS: Override Set - Reboot Required]
@@ -254,23 +254,23 @@ graph TD
 | Variation / Steps | Description | Test Data | Expected Result | Notes |
 |-------------------|-------------|-----------|-----------------|-------|
 | 1 | Get Boot HAL Handle | None | Boot HAL handle should be non-null (`bootHandle != nullptr`) | Verify service is accessible |
-| 2 | Display Boot Reason Options | None | Display all BootReason enum values to user | Includes: ERROR_UNKNOWN, WATCHDOG, MAINTENANCE_REBOOT, THERMAL_RESET, WARM_RESET, COLD_BOOT, STR_AUTH_FAILURE |
-| 3 | Accept User Input | User selects boot reason by entering integer | Valid integer input received | User chooses boot reason index |
+| 2 | Display Boot Cause Options | None | Display all BootCause enum values to user | Includes: ERROR_UNKNOWN, WATCHDOG, MAINTENANCE_REBOOT, THERMAL_RESET, WARM_RESET, COLD_BOOT, STR_AUTH_FAILURE |
+| 3 | Accept User Input | User selects boot cause by entering integer | Valid integer input received | User chooses boot cause index |
 | 4 | Validate Input | Check if input is valid integer | Input validation succeeds | Handle invalid input gracefully |
-| 5 | Convert to BootReason Enum | Cast integer to BootReason | Valid BootReason enum value obtained | |
-| 6 | Verify Boot Reason is Supported | Check against enum values | Selected boot reason matches a valid enum value | Log selected boot reason |
-| 7 | Create Reason String | Convert enum to string | Reason string created from boot reason | e.g., "MAINTENANCE_REBOOT" |
-| 8 | Call setBootReason() API | `bootReason` + `reasonString` | `setBootReason()` returns success<br>`Status::isOk() == true`<br>`exceptionCode == EX_NONE` | Boot reason override set |
-| 9 | Log Override Success | Set boot reason | Log successful boot reason override | Display set boot reason |
+| 5 | Convert to BootCause Enum | Cast integer to BootCause | Valid BootCause enum value obtained | |
+| 6 | Verify Boot Cause is Supported | Check against enum values | Selected boot cause matches a valid enum value | Log selected boot cause |
+| 7 | Create Cause String | Convert enum to string | Cause string created from boot cause | e.g., "MAINTENANCE_REBOOT" |
+| 8 | Call setBootCause() API | `bootCause` + `causeString` | `setBootCause()` returns success<br>`Status::isOk() == true`<br>`exceptionCode == EX_NONE` | Boot cause override set |
+| 9 | Log Override Success | Set boot cause | Log successful boot cause override | Display set boot cause |
 | 10 | Display Next Steps | None | Instruct user to run Test 1 (rebootSystem) | User must manually verify with reboot |
-| 11 | Test Complete | None | Boot reason override completed successfully | Test PASS - Requires subsequent reboot for full verification |
+| 11 | Test Complete | None | Boot cause override completed successfully | Test PASS - Requires subsequent reboot for full verification |
 
 ---
 
 ## References
 
-- Boot HAL Interface Specification - [com.rdk.hal.boot.IBoot AIDL Interface](https://github.com/rdkcentral/rdk-halif-aidl/blob/main/boot/current/com/rdk/hal/boot/IBoot.aidl)
-- Boot Reason Enumeration - [BootReason.aidl](https://github.com/rdkcentral/rdk-halif-aidl/blob/main/boot/current/com/rdk/hal/boot/BootReason.aidl)
-- Reset Type Enumeration - [ResetType.aidl](https://github.com/rdkcentral/rdk-halif-aidl/blob/main/boot/current/com/rdk/hal/boot/ResetType.aidl)
-- Capabilities Structure - [Capabilities.aidl](https://github.com/rdkcentral/rdk-halif-aidl/blob/main/boot/current/com/rdk/hal/boot/Capabilities.aidl)
-- High Level Test Specification - [Boot High Level Test Specification](https://github.com/rdkcentral/rdk-halif-aidl/blob/main/docs/pages/boot-high-level-test-spec.md)
+- Boot HAL Interface Specification - [com.rdk.hal.bootreason.IBootReason AIDL Interface](https://github.com/rdkcentral/rdk-halif-aidl/blob/0.21.0/bootreason/current/com/rdk/hal/bootreason/IBootReason.aidl)
+- Boot Cause Enumeration - [BootCause.aidl](https://github.com/rdkcentral/rdk-halif-aidl/blob/0.21.0/bootreason/current/com/rdk/hal/bootreason/BootCause.aidl)
+- Reset Type Enumeration - [ResetType.aidl](https://github.com/rdkcentral/rdk-halif-aidl/blob/0.21.0/bootreason/current/com/rdk/hal/bootreason/ResetType.aidl)
+- Capabilities Structure - [Capabilities.aidl](https://github.com/rdkcentral/rdk-halif-aidl/blob/0.21.0/bootreason/current/com/rdk/hal/bootreason/Capabilities.aidl)
+- High Level Test Specification - [Boot High Level Test Specification](Boot_High-Level_TestSpecification.md)
