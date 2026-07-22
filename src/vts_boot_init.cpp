@@ -65,7 +65,7 @@
 #include "vts_boot_init.h"
 #include "ut_log.h"
 
-#include "com/rdk/hal/boot/IBoot.h"
+#include "com/rdk/hal/bootreason/IBootReason.h"
 
 #include <binder/IServiceManager.h>
 #include <binder/IBinder.h>
@@ -79,14 +79,14 @@ using android::defaultServiceManager;
 using android::binder::Status;
 
 using namespace com::rdk::hal;
-using namespace com::rdk::hal::boot;
+using namespace com::rdk::hal::bootreason;
 
-sp<IBoot> gBOOTHandle = nullptr;
+sp<IBootReason> gBOOTHandle = nullptr;
 
 static UT_status_t vts_boot_getService()
 {
-    gBOOTHandle = android::interface_cast<IBoot>(
-        defaultServiceManager()->getService(String16(IBoot::serviceName().c_str())));
+    gBOOTHandle = android::interface_cast<IBootReason>(
+        defaultServiceManager()->getService(String16(IBootReason::serviceName().c_str())));
 
     if (gBOOTHandle == nullptr)
     {
