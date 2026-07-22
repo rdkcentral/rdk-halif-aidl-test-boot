@@ -324,7 +324,7 @@ install_linux_binder()
 create_halif_softlinks()
 {
     local YAML="${RDK_HAL_DIR}/versions_released.yaml"
-    local LIB_DIR="${RDK_HAL_DIR}/out/target/lib/halif"
+    local LIB_DIR="${RDK_HAL_DIR}/out/target/lib/rdk-halif-aidl"
     local in_components=0
 
     if [ ! -f "$YAML" ]; then
@@ -404,7 +404,7 @@ checkout_halif_repo()
         exit 1
     }
     # Branch changed — invalidate the halif modules stamp so they are rebuilt.
-    rm -f "${RDK_HAL_DIR}/out/target/lib/halif/.halif_modules_ready"
+    rm -f "${RDK_HAL_DIR}/out/target/lib/rdk-halif-aidl/.halif_modules_ready"
 }
 
 ###############################################################################
@@ -414,7 +414,7 @@ checkout_halif_repo()
 ###############################################################################
 build_halif_modules()
 {
-    local HALIF_LIB_DIR="${RDK_HAL_DIR}/out/target/lib/halif"
+    local HALIF_LIB_DIR="${RDK_HAL_DIR}/out/target/lib/rdk-halif-aidl"
     local HALIF_READY="${HALIF_LIB_DIR}/.halif_modules_ready"
 
     # Resolve the module version from versions_released.yaml, falling back
@@ -474,7 +474,7 @@ build_halif_modules()
 # build_modules.sh manifest:
 #   - Reads versions_released.yaml and compiles each component's pre-committed
 #     C++ from the pinned versioned snapshot into lib<module>-v<version>-cpp.so
-#   - Outputs libraries to rdk-halif-aidl/out/target/lib/halif/
+#   - Outputs libraries to rdk-halif-aidl/out/target/lib/rdk-halif-aidl/
 #   - Outputs headers  to rdk-halif-aidl/out/build/include/<module>/<version>/include/
 #
 # For ARM cross-compilation set CC/CXX/CFLAGS/CXXFLAGS/LDFLAGS in the
@@ -555,7 +555,7 @@ install_test()
           "${INSTALL_PATH}"/servicemanager
 
     # Install versioned halif libs and their softlinks from the snapshot build
-    local HALIF_LIB_DIR="${RDK_HAL_DIR}/out/target/lib/halif"
+    local HALIF_LIB_DIR="${RDK_HAL_DIR}/out/target/lib/rdk-halif-aidl"
     if [ -d "${HALIF_LIB_DIR}" ]; then
         find "${HALIF_LIB_DIR}" -maxdepth 1 -name "*.so" \
             -exec cp -a {} "${INSTALL_PATH}/" \; 2>/dev/null || true

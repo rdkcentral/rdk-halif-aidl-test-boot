@@ -72,15 +72,15 @@ SRC_DIRS += $(ROOT_DIR)/test
 
 # HAL interface headers and libraries from rdk-halif-aidl versioned snapshot build.
 # build_modules.sh manifest produces:
-#   out/target/lib/halif/lib<module>-v<version>-cpp.so  (versioned .so)
+#   out/target/lib/rdk-halif-aidl/lib<module>-v<version>-cpp.so  (versioned .so)
 #   out/build/include/<module>/<version>/include/        (staged headers)
 # build.sh create_halif_softlinks() adds:
-#   out/target/lib/halif/lib<module>-cpp.so -> lib<module>-v<version>-cpp.so
+#   out/target/lib/rdk-halif-aidl/lib<module>-cpp.so -> lib<module>-v<version>-cpp.so
 # and writes halif_generated.mk with HALIF_INC_DIRS and HALIF_MODULE_LIBS set
 # to the exact paths captured at that moment — avoiding wildcard/find at make
 # parse time, which silently returns empty on a clean tree.
 HALIF_OUT_DIR        := $(ROOT_DIR)/rdk-halif-aidl/out
-HALIF_LIB_DIR        := $(HALIF_OUT_DIR)/target/lib/halif
+HALIF_LIB_DIR        := $(HALIF_OUT_DIR)/target/lib/rdk-halif-aidl
 
 -include $(HALIF_OUT_DIR)/halif_generated.mk
 
