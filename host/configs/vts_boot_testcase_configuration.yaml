@@ -33,8 +33,8 @@ BootReason:
     - name: "VTS_L1_BOOT"
       test_cases: 
           - "getCapabilities_pos"
-          - "setBootReason_pos"
-          - "setBootReason_neg"
+          - "setBootCause_pos"
+          - "setBootCause_neg"
           - "getBootReason_pos"
           - "reboot_neg"
           - "getPowerSource_pos"
