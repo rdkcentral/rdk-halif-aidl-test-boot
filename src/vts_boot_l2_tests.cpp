@@ -96,7 +96,7 @@ public:
 };
 
 /**
- * @brief Validate setBootCause() and getBoot() functionality for all supported boot reasons.
+ * @brief Validate setBootCause() and getBootCause() functionality for all supported boot reasons.
  *
  * This test verifies the correct operation of setBootCause() and getBootReason() methods
  * by iterating through all available boot reason enum values. It sets each boot reason
@@ -121,7 +121,7 @@ public:
  * Refer to UT specification documentation [Boot_L2_Low-Level_TestSpecification.md](../docs/pages/Boot_L2_Low-Level_TestSpecification.md)
  *
  */
-UT_ADD_TEST(VTS_L2_BOOT, setAndGetBootReason)
+UT_ADD_TEST(VTS_L2_BOOT, setAndGetBootCause)
 {
     android::sp<com::rdk::hal::bootreason::IBootReason> bootHandle = gBOOTHandle;
     UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);

@@ -35,9 +35,9 @@ BootReason:
           - "getCapabilities_pos"
           - "setBootCause_pos"
           - "setBootCause_neg"
-          - "getBootReason_pos"
+          - "getBootCause_pos"
           - "reboot_neg"
           - "getPowerSource_pos"
     - name: "VTS_L2_BOOT"
       test_cases:
-          - "setAndGetBootReason"
+          - "setAndGetBootCause"
