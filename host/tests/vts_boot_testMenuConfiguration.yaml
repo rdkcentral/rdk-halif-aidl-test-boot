@@ -31,15 +31,15 @@ BootReason:
                 name: "VTS_L1_BOOT"
                 tests: 
                     - "getCapabilities_pos"
-                    - "setBootReason_pos"
-                    - "setBootReason_neg"
-                    - "getBootReason_pos"
+                    - "setBootCause_pos"
+                    - "setBootCause_neg"
+                    - "getBootCause_pos"
                     - "reboot_neg"
                     - "getPowerSource_pos"
             1:
                 name: "VTS_L2_BOOT"
                 tests:
-                    - "setAndGetBootReason"
+                    - "setAndGetBootCause"
             2:
                 name: "VTS_L3_BOOT"
                 tests:

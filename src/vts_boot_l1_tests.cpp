@@ -240,9 +240,9 @@ UT_ADD_TEST(VTS_L1_BOOT, setBootCause_neg)
 }
 
 /**
- * @brief Positive test for getBootReason() function of boot interface
+ * @brief Positive test for getBootCause() function of boot interface
  *
- * This test verifies that the getBootReason() method successfully retrieves the
+ * This test verifies that the getBootCause() method successfully retrieves the
  * current boot reason and that the returned value is among the supported boot
  * reasons declared in capabilities.
  *
@@ -258,7 +258,7 @@ UT_ADD_TEST(VTS_L1_BOOT, setBootCause_neg)
  * | 4    | Validate boot reason against capabilities       | bootReason, capabilities.supportedBootCauses            | bootReason matches one of supported reasons        | Ensures returned reason is valid           |
  *
  */
-UT_ADD_TEST(VTS_L1_BOOT, getBootReason_pos)
+UT_ADD_TEST(VTS_L1_BOOT, getBootCause_pos)
 {
     android::sp<com::rdk::hal::bootreason::IBootReason> bootHandle = gBOOTHandle;
     UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
