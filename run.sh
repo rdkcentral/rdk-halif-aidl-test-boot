@@ -20,5 +20,6 @@
 #* ******************************************************************************
 
 RUN_DIR=$(realpath "$(dirname "$0")")
+export LD_LIBRARY_PATH=$RUN_DIR/lib:$RUN_DIR:/usr/lib:/lib:/home/root${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
 echo "Executing [vts_boot_hal_test]"
 "${RUN_DIR}/vts_boot_hal_test" "$@"
