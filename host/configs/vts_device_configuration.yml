@@ -31,4 +31,4 @@ deviceConfig:
         prompt: "~#" # Prompt string on console
         wait_time: 40 #Configurable timeout value to limit the total duration of individual tests
         test:
-            profile: "../../profiles/hfp-boot.yaml" #HFP profile used to meet platform requirements
+            profile: "../../profiles/hfp-bootreason.yaml" #HFP profile used to meet platform requirements
