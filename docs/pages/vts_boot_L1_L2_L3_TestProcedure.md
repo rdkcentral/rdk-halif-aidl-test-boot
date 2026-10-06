@@ -103,7 +103,7 @@ cd /tmp/boot
 Run the following command to execute the VTS test:
 
 ```bash
-./run.sh -p profiles/hfp-boot.yaml
+./run.sh -p profiles/hfp-bootreason.yaml
 ```
 
 ## Run Tests in Python Environment
@@ -194,7 +194,7 @@ deviceConfig:
         prompt: "~#" # Prompt string on console
         wait_time: 40 # Configurable timeout value to limit the total duration of individual tests
         test:
-            profile: "../../profiles/hfp-boot.yaml" #HFP profile used to meet platform requirements
+            profile: "../../profiles/hfp-bootreason.yaml" #HFP profile used to meet platform requirements
 ```
 
 ### DUT Reboot Module
