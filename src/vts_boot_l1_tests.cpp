@@ -264,6 +264,7 @@ UT_ADD_TEST(VTS_L1_BOOT, getBootCause_pos)
     UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
     com::rdk::hal::bootreason::BootCause bootReason;
     BOOT_GETBOOTCAUSE_SUCCESS(bootHandle, bootReason);
+    UT_LOG_INFO("Boot reason obtained from getBootCause(): ", std::to_string(static_cast<int>(bootReason)));
 
     // Validate that the returned boot reason is among the supported boot reasons in capabilities
     com::rdk::hal::bootreason::Capabilities capabilities;

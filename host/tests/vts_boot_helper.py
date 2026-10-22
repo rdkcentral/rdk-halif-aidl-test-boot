@@ -131,7 +131,7 @@ class bootHelperClass(utHelperClass):
         self.dutRebootController = DutRebootController(
             log=self.log,
             platform=self.platform,
-            session=self.session if self.platform == "vDevice" else None,
+            session=self.hal_session,
             control_port=control_port if control_port else 8080
         )
 

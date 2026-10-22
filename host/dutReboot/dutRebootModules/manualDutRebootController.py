@@ -34,15 +34,21 @@ class ManualDutRebootController(DutRebootInterface):
     Prompts the user to manually reboot the device with the specified boot reason.
     """
 
-    def __init__(self, logger: logModule, platform: str = "device"):
+    def __init__(self, logger: logModule, session=None, platform: str = "device"):
         """
         Initialize the ManualDutRebootController for manual device reboots.
         
         Args:
             logger (logModule): Logger module instance for logging operations.
+            session: SSH session (optional, used for triggering various reboot types)
             platform (str, optional): Platform/device type name for display. Defaults to "device".
         """
         super().__init__(logger)
+        # Validate session
+        if session is None:
+            raise ValueError("session cannot be None")
+
+        self.session = session
         self.platform = platform
         self._log.info(f"ManualDutRebootController initialized for platform: {platform}")
 
@@ -56,12 +62,42 @@ class ManualDutRebootController(DutRebootInterface):
         Returns:
             bool: True (always returns True as we assume user follows instructions)
         """
+        actions = {
+                    "WATCHDOG": {
+                                  "type": "ssh",
+                                  "cmd": "echo c > /proc/sysrq-trigger"
+                                },
+                    "WARM_RESET": {
+                                    "type": "ssh",
+                                    "cmd": "reboot"
+                                  },
+                    "COLD_BOOT": {
+                                    "type": "manual",
+                                    "msg": "Please perform a cold reset on the device, unplug the power cable and plug it back in."
+                                  },
+                    "THERMAL_RESET": {
+                                       "type": "manual",
+                                       "msg": "Please perform a thermal reset on the device as per the device's thermal reset procedure."
+                                     }
+                  }
+
+        action = actions.get(boot_reason)
+
+        if not action:
+            self._log.error(f"Unsupported boot reason: {boot_reason}")
+            return False
         try:
-            self._log.info(f"Manual reboot required for {self.platform}")
-            self._log.info(f"Boot reason: {boot_reason}")
-            input(f"Please reboot {self.platform} with the specified boot reason: {boot_reason} and press Enter to continue...")
-            self._log.info("User confirmed device reboot")
-            return True
+            if action["type"] == "ssh":
+                self._log.info(f"Executing SSH reboot command: {action['cmd']} for boot reason: {boot_reason}")
+                self.session.write(f"{action['cmd']}\n")
+                return True
+            else:
+                self._log.info(f"Manual reboot required for {self.platform} for boot reason: {boot_reason}")
+                self._log.info(action["msg"])
+                input("Once the device has been rebooted, press Enter to continue...")
+                self._log.info("Reboot initiated/confirmed successfully")
+                return True
+
         except Exception as e:
-            self._log.error(f"Error during manual reboot prompt: {e}")
+            self._log.error(f"Failed to handle boot reason '{boot_reason}': {e}")
             return False

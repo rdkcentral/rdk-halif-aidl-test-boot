@@ -59,6 +59,7 @@ class DutRebootController:
         else:
             self.controller = ManualDutRebootController(
                 logger=self._log,
+                session=session,
                 platform=platform
             )
             self._log.info(f"Initialized ManualDutRebootController for {platform}")
