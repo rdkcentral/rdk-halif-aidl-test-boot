@@ -52,8 +52,8 @@ class vts_boot_L3_VerifyBootReasonExternalCause(bootHelperClass):
         """
         totatlResult = True
         for bootReason in self.l3TestConfig.L3.BootCause:
-            # if bootReason is MAINTENANCE_REBOOT or STR_AUTH_FAILURE, skip as it is not an external cause
-            if bootReason == "MAINTENANCE_REBOOT" or bootReason == "STR_AUTH_FAILURE":
+            # if bootReason is MAINTENANCE_REBOOT or STR_AUTH_FAILURE or ERROR_UNKNOWN, skip as it is not an external cause
+            if bootReason == "MAINTENANCE_REBOOT" or bootReason == "STR_AUTH_FAILURE" or bootReason == "ERROR_UNKNOWN":
                 self.log.info(f"Skipping boot reason: {bootReason}")
                 continue
             bootReasonExpected = bootReason
