@@ -29,7 +29,7 @@ from typing import Literal
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(dir_path, "../"))
-sys.path.append(os.path.join(dir_path, "../dutReboot"))
+sys.path.append(dir_path)
 
 from raft.framework.plugins.ut_raft.configRead import ConfigRead
 from raft.framework.plugins.ut_raft import utHelperClass
@@ -37,8 +37,7 @@ from raft.framework.core.logModule import logModule
 from raft.framework.plugins.ut_raft.utSuiteNavigator import UTSuiteNavigatorClass
 from raft.framework.plugins.ut_raft.utBaseUtils import utBaseUtils
 from raft.framework.plugins.ut_raft.utUserResponse import utUserResponse
-from dutRebootController import DutRebootController
-from dutRebootController import DutRebootController
+from rdk_raft.controller import Controller
 
 BOOT_TEST_MENU_CONFIGURATION_FILE = os.path.join(dir_path, "vts_boot_testMenuConfiguration.yaml")
 BOOT_TESTCASES_CONFIGURATION_FILE = os.path.join(os.path.join(dir_path, "../configs"), "vts_boot_testcase_configuration.yaml")
@@ -128,7 +127,7 @@ class bootHelperClass(utHelperClass):
         device_cfg = self.dut.rawConfig.get(self.dut.deviceName, {})
         dut_reboot_cfg = device_cfg.get("dutRebootController")
         control_port = dut_reboot_cfg.get("control_port") if dut_reboot_cfg else None
-        self.dutRebootController = DutRebootController(
+        self.dutRebootController = Controller.boot(
             log=self.log,
             platform=self.platform,
             session=self.session if self.platform == "vDevice" else None,

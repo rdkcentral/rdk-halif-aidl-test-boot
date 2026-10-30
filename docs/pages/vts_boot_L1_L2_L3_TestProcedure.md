@@ -103,7 +103,7 @@ cd /tmp/boot
 Run the following command to execute the VTS test:
 
 ```bash
-./run.sh -p profiles/hfp-boot.yaml
+./run.sh -p profiles/hfp-bootreason.yaml
 ```
 
 ## Run Tests in Python Environment
@@ -194,19 +194,21 @@ deviceConfig:
         prompt: "~#" # Prompt string on console
         wait_time: 40 # Configurable timeout value to limit the total duration of individual tests
         test:
-            profile: "../../profiles/hfp-boot.yaml" #HFP profile used to meet platform requirements
+            profile: "../../profiles/hfp-bootreason.yaml" #HFP profile used to meet platform requirements
 ```
 
 ### DUT Reboot Module
 
-The [host/dutReboot/](../../host/dutReboot/) module provides a pluggable, platform-aware mechanism for triggering device reboots with a specified boot reason. It abstracts the reboot mechanism so the same test code runs unchanged on both virtual and physical devices.
+The [`rdk_raft` controller](https://github.com/rdkcentral/rdk_raft/blob/main/controllers/dutRebootController.py) provides a pluggable, platform-aware mechanism for triggering device reboots with a specified boot reason. The `rdk_raft.Controller` facade exposes it through a stable entry point so the same test code runs on virtual and physical devices.
 
 #### How It Works
 
-The `bootHelperClass` constructs a `DutRebootController` during initialization:
+The `bootHelperClass` constructs the reboot controller through `Controller.boot()` during initialization:
 
 ```python
-self.dutRebootController = DutRebootController(
+from rdk_raft.controller import Controller
+
+self.dutRebootController = Controller.boot(
     log=self.log,
     platform=self.platform,        # "vDevice" or real device platform string
     session=self.session,          # SSH session (vDevice only)
@@ -218,7 +220,7 @@ At test runtime, `triggerReboot(boot_reason)` is called:
 
 | Platform | Behaviour |
 |----------|-----------|
-| `vDevice` | Sends a YAML message to the ut-controller, which forwards the boot reason to the running `Vendor-Boot` process |
+| `vDevice` | Sends a YAML message to the ut-controller, which forwards the boot reason to the running `Vendor-Boot`/respective boot process |
 | Real device | Prompts the user in the console to manually trigger a reboot with the specified boot reason |
 
 The YAML message format used for vDevice:
