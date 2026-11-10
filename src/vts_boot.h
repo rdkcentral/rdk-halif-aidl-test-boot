@@ -68,7 +68,6 @@
 #include <binder/ProcessState.h>
 #include <binder/IPCThreadState.h>
 #include <binder/Status.h>
-#include <utils/String16.h>
 
 #include "com/rdk/hal/bootreason/IBootReason.h"
 #include <iostream>
@@ -103,7 +102,7 @@
 #define BOOT_REBOOT_SUCCESS(bootHandle, resetTypes, reasonString)                 \
     do{                                                                           \
         ::android::binder::Status status; \
-        UT_LOG_DEBUG("Calling reboot(IN:resetTypes[%s], reasonString[%s])", com::rdk::hal::bootreason::toString(resetTypes).c_str(), ::android::String8(reasonString).c_str()); \
+        UT_LOG_DEBUG("Calling reboot(IN:resetTypes[%s], reasonString[%s])", com::rdk::hal::bootreason::toString(resetTypes).c_str(), reasonString.c_str()); \
         fflush(stdout); \
         fflush(stderr); \
         sleep(1); /* Sleep for a short duration to allow log to be printed before reboot happens */ \
@@ -117,7 +116,7 @@
 #define BOOT_REBOOT_FAILURE(bootHandle, resetTypes, reasonString, expectedException)                 \
     do{                                                                           \
         ::android::binder::Status status; \
-        UT_LOG_DEBUG("Calling reboot(IN:resetTypes[%s], reasonString[%s])", com::rdk::hal::bootreason::toString(resetTypes).c_str(), ::android::String8(reasonString).c_str()); \
+        UT_LOG_DEBUG("Calling reboot(IN:resetTypes[%s], reasonString[%s])", com::rdk::hal::bootreason::toString(resetTypes).c_str(), reasonString.c_str()); \
         sleep(1); /* Sleep for a short duration to allow log to be printed before reboot happens */ \
         status = bootHandle->reboot(resetTypes, reasonString); \
         UT_LOG_DEBUG("Result set(OUT:), status:[isOK:%s, exception:%s]", status.isOk() ? "true" : "false", std::to_string(status.exceptionCode()).c_str()); \
@@ -141,7 +140,7 @@
     do{                                                                           \
         ::android::binder::Status status; \
         UT_LOG_DEBUG("Calling setBootCause(IN:bootCause[%s], reasonString[%s])", com::rdk::hal::bootreason::toString(bootReason).c_str(), reasonString.c_str()); \
-        status = bootHandle->setBootCause(bootReason, ::android::String16(reasonString.c_str())); \
+        status = bootHandle->setBootCause(bootReason, reasonString); \
         UT_LOG_DEBUG("Result setBootCause(OUT:), status:[isOK:%s, exception:%s]", status.isOk() ? "true" : "false", std::to_string(status.exceptionCode()).c_str()); \
         UT_ASSERT_TRUE(status.isOk());                                        \
         UT_ASSERT_EQUAL(status.exceptionCode(), ::android::binder::Status::EX_NONE); \
@@ -155,9 +154,9 @@
         const char *_rs = (reasonString && reasonString[0] != '\0')                         \
                       ? reasonString                                                \
                       : "NULL";                                                     \
-        ::android::String16 reasonStr16 = reasonString ? ::android::String16(reasonString) : ::android::String16(); \
+        std::string reasonStr = reasonString ? reasonString : ""; \
         UT_LOG_DEBUG("Calling setBootCause(IN:bootCause[%s], reasonString[%s])", com::rdk::hal::bootreason::toString(bootReason).c_str(), _rs); \
-        status = bootHandle->setBootCause(bootReason, reasonStr16); \
+        status = bootHandle->setBootCause(bootReason, reasonStr); \
         UT_LOG_DEBUG("Result setBootCause(OUT:), status:[isOK:%s, exception:%d]", status.isOk() ? "true" : "false", status.exceptionCode()); \
         UT_ASSERT_FALSE(status.isOk()); \
         UT_ASSERT_EQUAL(status.exceptionCode(), expectedException); \
