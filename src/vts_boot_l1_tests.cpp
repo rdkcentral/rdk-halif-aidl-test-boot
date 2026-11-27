@@ -307,15 +307,15 @@ UT_ADD_TEST(VTS_L1_BOOT, reboot_neg)
     UT_ASSERT_NOT_EQUAL(bootHandle, nullptr);
     // Using an unsupported reset type to test negative case
     com::rdk::hal::bootreason::ResetType invalidResetType = static_cast<com::rdk::hal::bootreason::ResetType>(-999);
-    ::android::String16 reasonString = android::String16("invalidResetType");
+    std::string reasonString = "invalidResetType";
     BOOT_REBOOT_FAILURE(bootHandle, invalidResetType, reasonString, ::android::binder::Status::EX_ILLEGAL_ARGUMENT);
 
     // Using empty reason string to test negative case
-    BOOT_REBOOT_FAILURE(bootHandle, com::rdk::hal::bootreason::ResetType::FULL_SYSTEM_RESET, android::String16(""), ::android::binder::Status::EX_ILLEGAL_ARGUMENT);
+    BOOT_REBOOT_FAILURE(bootHandle, com::rdk::hal::bootreason::ResetType::FULL_SYSTEM_RESET, std::string(), ::android::binder::Status::EX_ILLEGAL_ARGUMENT);
 
     // Using a causeString exceeding the 64-byte limit to test negative case
     std::string longReasonStr(65, 'a'); // 65 characters, one byte beyond the 64-byte limit
-    BOOT_REBOOT_FAILURE(bootHandle, com::rdk::hal::bootreason::ResetType::FULL_SYSTEM_RESET, android::String16(longReasonStr.c_str()), ::android::binder::Status::EX_ILLEGAL_ARGUMENT);
+    BOOT_REBOOT_FAILURE(bootHandle, com::rdk::hal::bootreason::ResetType::FULL_SYSTEM_RESET, longReasonStr, ::android::binder::Status::EX_ILLEGAL_ARGUMENT);
 }
 
 /**

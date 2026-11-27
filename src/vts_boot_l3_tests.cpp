@@ -165,7 +165,7 @@ UT_ADD_TEST(VTS_L3_BOOT, rebootSystem)
         return;
     }
 
-    ::android::String16 reasonString = android::String16(com::rdk::hal::bootreason::toString(uResetType).c_str());
+    std::string reasonString = com::rdk::hal::bootreason::toString(uResetType);
     BOOT_REBOOT_SUCCESS(bootHandle, uResetType, reasonString);
 }
 
